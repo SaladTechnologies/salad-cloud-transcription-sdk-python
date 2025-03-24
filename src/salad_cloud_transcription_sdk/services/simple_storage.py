@@ -23,13 +23,9 @@ class HttpMethod(Enum):
     OPTIONS = "OPTIONS"
 
 
-class SimpleStorageService(
-    BaseService
-):  # Fixed class name typo: SimpleStoraegService -> SimpleStorageService
-    # Maximum file size for direct upload (100MB)
-    MAX_FILE_SIZE = 1 * 1024 * 1024
-    # Default chunk size for multipart uploads (80MB)
-    DEFAULT_CHUNK_SIZE = 1024 * 1024 / 4
+class SimpleStorageService(BaseService):
+    MAX_FILE_SIZE = 100 * 1024 * 1024
+    DEFAULT_CHUNK_SIZE = 80 * 1024 * 1024
     # Default signature expiration in seconds (5 days)
     DEFAULT_SIGNATURE_EXP = 432000
 
