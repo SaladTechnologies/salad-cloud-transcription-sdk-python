@@ -5,13 +5,13 @@ An enum class containing all the possible environments for the SDK
 from enum import Enum
 from urllib.parse import urlparse
 
+TRANSCRIPTION_ENDPOINT_NAME = "transcription"
 
 class Environment(Enum):
     """The environments available for the SDK"""
 
     DEFAULT_SALAD_API_URL = "https://api.salad.com/api/public"
     DEFAULT_S4_URL = "https://storage-api.salad.com"
-    TRANSCRIPTION_ENDPOINT_NAME = "transcription"
 
     def __new__(cls, url):
         parsed_url = urlparse(url)

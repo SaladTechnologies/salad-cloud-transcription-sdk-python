@@ -1,5 +1,8 @@
-from typing import Any, Set, Dict
+from typing import Any, BinaryIO, Optional, Set, Dict, Tuple
 from .utils import extract_original_data
+import mimetypes
+
+FilesType = Dict[str, Tuple[Optional[str], BinaryIO, Optional[str]]]
 
 
 class Request:
@@ -33,7 +36,7 @@ class Request:
         self.headers = None
         self.body = None
         self.scopes = None
-        self.multipart_form = None
+        self.files = None
 
     def set_url(self, url: str) -> "Request":
         """
@@ -81,20 +84,6 @@ class Request:
         self.headers["Content-Type"] = content_type
         return self
 
-    def set_multipart_form(self, form_data: Dict[str, Any]) -> "Request":
-        """
-        Set the request as a multipart form data request, typically used for file uploads.
-
-        :param Dict[str, Any] form_data: Dictionary of form fields and values to include in the request.
-        :return: The updated Request object.
-        :rtype: Request
-        """
-        self.multipart_form = form_data
-
-        # Note: The actual boundary will be added by the HTTP client when sending the request
-        self.headers["Content-Type"] = "multipart/form-data"
-        return self
-
     def set_scopes(self, scopes: Set[str]) -> "Request":
         """
         Set the scopes for the request.
@@ -104,6 +93,33 @@ class Request:
         :rtype: Request
         """
         self.scopes = scopes
+        return self
+
+    def set_files(self, files: FilesType) -> "Request":
+        """
+        Sets the files  for multipart/form-data requests.
+
+        :param files: Dictionary where keys are field names and values are tuples (filename, file_obj, mimetype).
+        :return: The updated Request object.
+        :rtype: Request
+        """
+        formatted_files = {}
+
+        for key, value in files.items():
+            if not isinstance(value, tuple) or len(value) < 2:
+                raise ValueError(f"Invalid file tuple for key '{key}': {value}")
+
+            filename, file_obj, *mime_type = value
+            mime_type = (
+                mime_type[0]
+                if mime_type
+                else mimetypes.guess_type(filename or "")[0]
+                or "application/octet-stream"
+            )
+
+            formatted_files[key] = (filename, file_obj, mime_type)
+
+        self.files = formatted_files
         return self
 
     def __str__(self) -> str:

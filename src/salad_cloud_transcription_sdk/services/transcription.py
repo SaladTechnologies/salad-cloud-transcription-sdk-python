@@ -10,7 +10,7 @@ from .utils.base_service import BaseService
 from ..net.transport.serializer import Serializer
 from ..models.transcription_request import TranscriptionRequest
 from .simple_storage import SimpleStorageService
-from ..net.environment.environment import Environment
+from ..net.environment.environment import Environment, TRANSCRIPTION_ENDPOINT_NAME
 
 
 class TranscriptionService(BaseService):
@@ -79,7 +79,7 @@ class TranscriptionService(BaseService):
         )
         
         # Use Salad SDK inference service to create the actual job
-        inference_endpoint_name = Environment.TRANSCRIPTION_ENDPOINT_NAME.value
+        inference_endpoint_name = TRANSCRIPTION_ENDPOINT_NAME
         response = self._salad_sdk.inference_endpoints.create_inference_endpoint_job(
             request_body=job_prototype,
             organization_name=organization_name,
@@ -106,7 +106,7 @@ class TranscriptionService(BaseService):
         :param organization_name: The organization name
         :type organization_name: str
         
-        :raises ValueError: If the file doesn't exist or source is invalid (invalid path, invalid URL)
+        :raises ValueError: If the source is invalid (invalid URL)
         :return: A valid URL pointing to the content
         :rtype: str
         """
@@ -115,20 +115,11 @@ class TranscriptionService(BaseService):
         if parsed_url.scheme in ('http', 'https') and parsed_url.netloc:
             return source
         else:
-            # It's a local file path
-            if not os.path.exists(source):
-                raise ValueError(f"File not found: {source}")
-            
-            # Upload the file to storage
-            with open(source, 'rb') as file:
-                filename = os.path.basename(source)
-                mime_type = self._determine_mime_type(filename)
-                return self._storage_service.upload_file(
-                    organization_name=organization_name,
-                    filename=filename,
-                    file=file,
-                    mime_type=mime_type
-                )
+            # It's a local file path - let the storage service handle file existence check and opening
+            return self._storage_service.upload_file(
+                organization_name=organization_name,
+                local_file_path=source
+            )
     
     def get_transcription_job(self, organization_name: str, job_id: str) -> InferenceEndpointJob:
         """Get a transcription job by providing the inference job ID
@@ -141,7 +132,7 @@ class TranscriptionService(BaseService):
         :return: The transcription job details
         :rtype: InferenceEndpointJob
         """
-        inference_endpoint_name = Environment.TRANSCRIPTION_ENDPOINT_NAME.value
+        inference_endpoint_name = TRANSCRIPTION_ENDPOINT_NAME
         return self._salad_sdk.inference_endpoints.get_inference_endpoint_job(
             organization_name=organization_name,
             inference_endpoint_name=inference_endpoint_name,
@@ -166,7 +157,7 @@ class TranscriptionService(BaseService):
         :return: Collection of transcription jobs
         :rtype: InferenceEndpointJobCollection
         """
-        inference_endpoint_name = Environment.TRANSCRIPTION_ENDPOINT_NAME.value
+        inference_endpoint_name = TRANSCRIPTION_ENDPOINT_NAME
         return self._salad_sdk.inference_endpoints.list_inference_endpoint_jobs(
             organization_name=organization_name,
             inference_endpoint_name=inference_endpoint_name,
@@ -184,28 +175,9 @@ class TranscriptionService(BaseService):
         
         :raises RequestError: Raised when a request fails.
         """
-        inference_endpoint_name = Environment.TRANSCRIPTION_ENDPOINT_NAME.value
+        inference_endpoint_name = TRANSCRIPTION_ENDPOINT_NAME
         self._salad_sdk.inference_endpoints.delete_inference_endpoint_job(
             organization_name=organization_name,
             inference_endpoint_name=inference_endpoint_name,
             inference_endpoint_job_id=job_id
         )
-    
-    def _determine_mime_type(self, filename: str) -> str:
-        extension = os.path.splitext(filename)[1].lower()
-        mime_map = {
-            # Audio formats
-            ".aiff": "audio/aiff",
-            ".flac": "audio/flac",
-            ".m4a": "audio/mp4",
-            ".mp3": "audio/mpeg",
-            ".wav": "audio/wav",
-            
-            # Video formats
-            ".mkv": "video/x-matroska",
-            ".mov": "video/quicktime",
-            ".webm": "video/webm",
-            ".wma": "audio/x-ms-wma",
-            ".mp4": "video/mp4"
-        }
-        return mime_map.get(extension, "application/octet-stream")

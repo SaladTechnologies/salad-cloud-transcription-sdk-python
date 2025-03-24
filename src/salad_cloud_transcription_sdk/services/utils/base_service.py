@@ -7,7 +7,6 @@ from ...net.headers.base_header import BaseHeader
 
 from ...net.transport.request import Request
 from ...net.request_chain.request_chain import RequestChain
-from ...net.request_chain.handlers.hook_handler import HookHandler
 from ...net.request_chain.handlers.http_handler import HttpHandler
 from ...net.headers.api_key_auth import ApiKeyAuth
 from ...net.request_chain.handlers.retry_handler import RetryHandler
@@ -122,7 +121,6 @@ class BaseService:
         """
         return (
             RequestChain()
-            .add_handler(HookHandler())
             .add_handler(RetryHandler())
             .add_handler(HttpHandler(self._timeout))
         )

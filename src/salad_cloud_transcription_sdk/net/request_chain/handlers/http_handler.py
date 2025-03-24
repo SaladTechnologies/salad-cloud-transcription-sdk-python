@@ -105,6 +105,9 @@ class HttpHandler(BaseHandler):
         if request.method == "GET" and not data:
             return {}
 
+        if "application/octet-stream" in content_type:
+            return {"data": data}
+
         if content_type.startswith("application/") and "json" in content_type:
             return {"json": data}
 

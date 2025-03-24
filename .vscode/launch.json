@@ -1,0 +1,14 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug Pytest (Poetry)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "C:\\Users\\marcel\\AppData\\Local\\Programs\\Python\\Python313\\Scripts\\poetry.exe",
+            "args": ["run", "python", "-m", "debugpy", "--listen", "5678", "-m", "pytest", "${file}"],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        }
+    ]
+}

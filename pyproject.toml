@@ -37,3 +37,17 @@ Homepage = "https://github.com/saladtechnologies/salad-cloud-transcription-sdk-p
 Documentation = "https://docs.salad.com"
 Repository = "https://github.com/SaladTechnologies/salad-cloud-transcription-sdk-python.git"
 Issues = "https://github.com/SaladTechnologies/salad-cloud-transcription-sdk-python/issues"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.5"
+pytest-cov = "^6.0.0"
+python-dotenv = "^1.0.1"
+debugpy = "^1.8.13"
+
+[tool.pytest.ini_options]
+pythonpath = [
+  ".", "tests"
+]
+env = [
+    "PYTHONPATH=.:tests"
+]
