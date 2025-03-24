@@ -236,7 +236,10 @@ class BaseModel:
             )
 
     def _enum_matching(
-        self, value: Union[str, Enum], enum_values: List[str], variable_name: str
+        self,
+        value: Union[str, Enum],
+        enum_values: List[Union[str, Enum]],
+        variable_name: str,
     ) -> Union[str, Enum]:
         """
         Checks if a value (str or enum) matches the required enum values and returns the value if there's a match.
@@ -244,7 +247,7 @@ class BaseModel:
         :param value: The value to be checked.
         :type value: Union[str, Enum]
         :param enum_values: The list of valid enum values.
-        :type enum_values: List[str]
+        :type enum_values: List[Union[str, Enum]]
         :param variable_name: The variable name.
         :type variable_name: str
         :return: The value if it matches one of the enum values.
@@ -254,13 +257,28 @@ class BaseModel:
         if value is None:
             return None
 
-        str_value = value.value if isinstance(value, Enum) else value
-        if str_value in enum_values:
-            return value
+        if isinstance(value, Enum):
+            if value in enum_values:
+                return value
+
+            enum_string_values = [
+                e.value if isinstance(e, Enum) else e for e in enum_values
+            ]
+            if value.value in enum_string_values:
+                return value
         else:
-            raise ValueError(
-                f"Invalid value for {variable_name}: must match one of {enum_values}, received {value}"
-            )
+            if value in enum_values:
+                return value
+
+            enum_string_values = [
+                e.value if isinstance(e, Enum) else e for e in enum_values
+            ]
+            if value in enum_string_values:
+                return value
+
+        raise ValueError(
+            f"Invalid value for {variable_name}: must match one of {enum_values}, received {value}"
+        )
 
     def _get_representation(self, level: int = 0) -> str:
         """

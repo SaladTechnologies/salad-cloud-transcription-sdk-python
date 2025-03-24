@@ -34,9 +34,8 @@ def test_upload_small_file_no_signature(simple_storage_service):
         except RequestError as e:
             error_details = {"message": str(e), "response_body": e.response.__str__()}
             print(f"RequestError: {json.dumps(error_details, indent=4)}")
-            raise  # Re-raise the exception after printing details
+            raise
     finally:
-        # Clean up the temporary file
         if os.path.exists(local_file_path):
             os.unlink(local_file_path)
 
@@ -69,9 +68,8 @@ def test_upload_small_file_with_signature(simple_storage_service):
         except RequestError as e:
             error_details = {"message": str(e), "response_body": e.response.__str__()}
             print(f"RequestError: {json.dumps(error_details, indent=4)}")
-            raise  # Re-raise the exception after printing details
+            raise
     finally:
-        # Clean up the temporary file
         if os.path.exists(local_file_path):
             os.unlink(local_file_path)
 
@@ -79,7 +77,6 @@ def test_upload_small_file_with_signature(simple_storage_service):
 def test_upload_large_file_with_signature(simple_storage_service):
     """Test that we can upload a large file with a signature."""
 
-    # Use an existing video file
     local_file_path = os.path.join("tests", "data", "small_video.mp4")
 
     try:
@@ -102,7 +99,6 @@ def test_upload_large_file_with_signature(simple_storage_service):
         except RequestError as e:
             error_details = {"message": str(e), "response_body": e.response.__str__()}
             print(f"RequestError: {json.dumps(error_details, indent=4)}")
-            raise  # Re-raise the exception after printing details
+            raise
     finally:
-        # No need to delete the file as it's not temporary
         pass

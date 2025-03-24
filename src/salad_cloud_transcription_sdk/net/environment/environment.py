@@ -5,7 +5,8 @@ An enum class containing all the possible environments for the SDK
 from enum import Enum
 from urllib.parse import urlparse
 
-TRANSCRIPTION_ENDPOINT_NAME = "transcription"
+TRANSCRIPTION_ENDPOINT_NAME = "transcribe"
+
 
 class Environment(Enum):
     """The environments available for the SDK"""

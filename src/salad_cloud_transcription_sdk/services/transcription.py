@@ -1,10 +1,15 @@
+import json
 import os
 import time
 from typing import Dict, Any, Union, Optional
 from urllib.parse import urlparse
 
 from salad_cloud_sdk import SaladCloudSdk
-from salad_cloud_sdk.models import InferenceEndpointJobPrototype, InferenceEndpointJob, Status
+from salad_cloud_sdk.models import (
+    InferenceEndpointJobPrototype,
+    InferenceEndpointJob,
+    Status,
+)
 from .utils.validator import Validator
 from .utils.base_service import BaseService
 from ..net.transport.serializer import Serializer
@@ -16,7 +21,11 @@ from ..net.environment.environment import Environment, TRANSCRIPTION_ENDPOINT_NA
 class TranscriptionService(BaseService):
     """Service for interacting with Salad Cloud Transcription API"""
 
-    def __init__(self, base_url: Union[Environment, str] = Environment.DEFAULT_SALAD_API_URL, api_key: Optional[str] = None) -> None:
+    def __init__(
+        self,
+        base_url: Union[Environment, str] = Environment.DEFAULT_SALAD_API_URL,
+        api_key: Optional[str] = None,
+    ) -> None:
         """
         Initializes a TranscriptionService instance.
 
@@ -29,15 +38,12 @@ class TranscriptionService(BaseService):
             base_url.value if isinstance(base_url, Environment) else base_url
         )
         super().__init__(base_url)
-        
+
         if api_key:
             self.set_api_key(api_key)
-            
+
         self._storage_service = SimpleStorageService(api_key=api_key)
-        self._salad_sdk = SaladCloudSdk(
-            api_key=api_key,
-            base_url=base_url
-        )
+        self._salad_sdk = SaladCloudSdk(api_key=api_key, base_url=base_url)
 
     def transcribe(
         self,
@@ -56,28 +62,30 @@ class TranscriptionService(BaseService):
         :type request: TranscriptionRequest
         :param auto_poll: Whether to block until the transcription is complete, or return immediately
         :type auto_poll: bool, optional (default=False)
-        
+
         :raises RequestError: Raised when a request fails.
         :raises ValueError: Raised when input parameters are invalid.
-        
+
         :return: The transcription job details
         :rtype: InferenceEndpointJob
         """
-        
+
         Validator(str).min_length(2).max_length(63).pattern(
-            "^[a-z][a-z0-61}[a-z0-9]$"
+            "^[a-z][a-z0-9-]{0,61}[a-z0-9]$"
         ).validate(organization_name)
-        
+
         # Get the source file URL (also uploads the file to S4 if it's local)
         file_url = self._process_source(source, organization_name)
-        
-        request_dict = request.to_dict()
-        request_dict["source"] = file_url
-        
+
+        request_dict = request.to_dict()["input"]
+        request_dict["url"] = file_url
+
         job_prototype = InferenceEndpointJobPrototype(
             input=request_dict,
         )
-        
+
+        print(job_prototype)
+
         # Use Salad SDK inference service to create the actual job
         inference_endpoint_name = TRANSCRIPTION_ENDPOINT_NAME
         response = self._salad_sdk.inference_endpoints.create_inference_endpoint_job(
@@ -85,50 +93,57 @@ class TranscriptionService(BaseService):
             organization_name=organization_name,
             inference_endpoint_name=inference_endpoint_name,
         )
-        
+
         # If auto_poll is enabled, let's wait for the transcription to complete
         # Polls every 5 seconds, if enabled
         if auto_poll:
-            job_id = response.id
+            job_id = response.id_
             while True:
                 job = self.get_transcription_job(organization_name, job_id)
-                if job.status in [Status.SUCCEEDED.value, Status.FAILED.value, Status.CANCELLED.value]:
+                if job.status in [
+                    Status.SUCCEEDED.value,
+                    Status.FAILED.value,
+                    Status.CANCELLED.value,
+                ]:
                     return job
-                time.sleep(5) 
-        
+                time.sleep(5)
+
         return response
-    
+
     def _process_source(self, source: str, organization_name: str) -> str:
         """Process the source to determine if it's a URL or local file and handle accordingly
-        
+
         :param source: The file to transcribe - can be a URL or local file path
         :type source: str
         :param organization_name: The organization name
         :type organization_name: str
-        
+
         :raises ValueError: If the source is invalid (invalid URL)
         :return: A valid URL pointing to the content
         :rtype: str
         """
         # Check if it's a URL
         parsed_url = urlparse(source)
-        if parsed_url.scheme in ('http', 'https') and parsed_url.netloc:
+        if parsed_url.scheme in ("http", "https") and parsed_url.netloc:
             return source
         else:
             # It's a local file path - let the storage service handle file existence check and opening
-            return self._storage_service.upload_file(
-                organization_name=organization_name,
-                local_file_path=source
+            upload_response = self._storage_service.upload_file(
+                organization_name=organization_name, local_file_path=source
             )
-    
-    def get_transcription_job(self, organization_name: str, job_id: str) -> InferenceEndpointJob:
+
+            return upload_response.url
+
+    def get_transcription_job(
+        self, organization_name: str, job_id: str
+    ) -> InferenceEndpointJob:
         """Get a transcription job by providing the inference job ID
 
         :param organization_name: The organization name
         :type organization_name: str
         :param job_id: The transcription job ID
         :type job_id: str
-        
+
         :return: The transcription job details
         :rtype: InferenceEndpointJob
         """
@@ -136,14 +151,14 @@ class TranscriptionService(BaseService):
         return self._salad_sdk.inference_endpoints.get_inference_endpoint_job(
             organization_name=organization_name,
             inference_endpoint_name=inference_endpoint_name,
-            inference_endpoint_job_id=job_id
+            inference_endpoint_job_id=job_id,
         )
-    
+
     def list_transcription_jobs(
-        self, 
-        organization_name: str, 
-        page: Optional[int] = None, 
-        page_size: Optional[int] = None
+        self,
+        organization_name: str,
+        page: Optional[int] = None,
+        page_size: Optional[int] = None,
     ):
         """Lists all transcription jobs for an organization
 
@@ -153,7 +168,7 @@ class TranscriptionService(BaseService):
         :type page: Optional[int], optional
         :param page_size: The maximum number of items per page, defaults to None
         :type page_size: Optional[int], optional
-        
+
         :return: Collection of transcription jobs
         :rtype: InferenceEndpointJobCollection
         """
@@ -162,9 +177,9 @@ class TranscriptionService(BaseService):
             organization_name=organization_name,
             inference_endpoint_name=inference_endpoint_name,
             page=page,
-            page_size=page_size
+            page_size=page_size,
         )
-    
+
     def delete_transcription_job(self, organization_name: str, job_id: str) -> None:
         """Cancels a transcription job
 
@@ -172,12 +187,12 @@ class TranscriptionService(BaseService):
         :type organization_name: str
         :param job_id: The transcription job ID
         :type job_id: str
-        
+
         :raises RequestError: Raised when a request fails.
         """
         inference_endpoint_name = TRANSCRIPTION_ENDPOINT_NAME
         self._salad_sdk.inference_endpoints.delete_inference_endpoint_job(
             organization_name=organization_name,
             inference_endpoint_name=inference_endpoint_name,
-            inference_endpoint_job_id=job_id
+            inference_endpoint_job_id=job_id,
         )

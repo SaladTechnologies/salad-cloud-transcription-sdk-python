@@ -42,10 +42,11 @@ class SimpleStorageService(BaseService):
         :param api_key: The API key for authentication.
         :type api_key: Optional[str]
         """
-        self._base_url = (
-            base_url.value if isinstance(base_url, Environment) else base_url
-        )
-        super().__init__(base_url)
+        _base_url = base_url.value if isinstance(base_url, Environment) else base_url
+        print()
+        print(_base_url)
+        print()
+        super().__init__(_base_url)
         if api_key:
             self.set_api_key(api_key)
 
