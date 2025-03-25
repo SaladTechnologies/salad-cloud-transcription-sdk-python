@@ -1,5 +1,6 @@
 import os
 import json
+from urllib.parse import urlparse
 import requests
 from pathlib import Path
 from enum import Enum
@@ -113,13 +114,20 @@ class SimpleStorageService(BaseService):
             )
         # For large files, use multipart upload
         else:
-            return self._upload_file_in_parts(
+            file_response = self._upload_file_in_parts(
                 organization_name=organization_name,
                 local_file_path=local_file_path,
                 filename=filename,
                 mime_type=mime_type,
                 sign=sign,
                 signature_exp=signature_exp,
+            )
+            filename = os.path.basename(urlparse(file_response.url).path)
+            return self.sign_url(
+                filename=filename,
+                organization_name=organization_name,
+                method=HttpMethod.GET,
+                exp=signature_exp,
             )
 
     def _upload_file_direct(
@@ -190,15 +198,6 @@ class SimpleStorageService(BaseService):
         :return: Response containing the URL where the file can be accessed
         :rtype: FileUploadResponse
         """
-        # Query parameters for creating MPU
-        query_params = {}
-        if sign:
-            query_params["sign"] = "true"
-            if signature_exp:
-                query_params["signatureExp"] = signature_exp
-        if mime_type:
-            query_params["mimeType"] = mime_type
-
         # Step 1: Create multipart upload
         serialized_create_request = (
             Serializer(
@@ -227,7 +226,7 @@ class SimpleStorageService(BaseService):
 
                 serialized_chunk_request = (
                     Serializer(
-                        f"{self.base_url}/organizations/{{organization_name}}/files/{{filename}}",
+                        f"{self.base_url}/organizations/{{organization_name}}/file_parts/{{filename}}",
                         [self.get_api_key()],
                     )
                     .add_path("organization_name", organization_name)
@@ -240,13 +239,10 @@ class SimpleStorageService(BaseService):
                 )
 
                 chunk_response, _, _ = self.send_request(serialized_chunk_request)
-                print(chunk_response)
                 parts.append(
                     {"partNumber": part_number, "etag": chunk_response.get("etag", "")}
                 )
                 part_number += 1
-
-        print(parts)
 
         # Step 3: Complete multipart upload
         serialized_complete_request = (
@@ -264,7 +260,19 @@ class SimpleStorageService(BaseService):
         )
 
         complete_response, _, _ = self.send_request(serialized_complete_request)
-        return FileUploadResponse(url=complete_response["url"])
+        print(complete_response)
+
+        # Parse the JSON string if the response is a string
+        if isinstance(complete_response, str):
+            try:
+                complete_response_dict = json.loads(complete_response)
+                return FileUploadResponse._unmap(complete_response_dict)
+            except (json.JSONDecodeError, KeyError) as e:
+                raise ValueError(
+                    f"Failed to parse response: {complete_response}"
+                ) from e
+
+        return FileUploadResponse._unmap(complete_response)
 
     def delete_file(
         self,
@@ -310,7 +318,7 @@ class SimpleStorageService(BaseService):
         filename: str,
         method: Union[HttpMethod, str],
         exp: int,
-    ) -> str:
+    ) -> FileUploadResponse:
         """Signs an URL
 
         :param organization_name: Your organization name. This identifies the billing context for the API operation and represents a security boundary for SaladCloud resources. The organization must be created before using the API, and you must be a member of the organization.
@@ -354,7 +362,7 @@ class SimpleStorageService(BaseService):
         )
 
         response, _, _ = self.send_request(serialized_request)
-        return response
+        return FileUploadResponse._unmap(response)
 
     def _determine_mime_type(self, filename: str) -> str:
         """Determines the MIME type based on the file extension

@@ -14,7 +14,6 @@ from salad_cloud_transcription_sdk.models.transcription_request import (
 from .config import TestConfig
 
 
-@pytest.mark.integration
 def test_transcribe_local_file(transcription_service):
     """Test transcribing a local file"""
     request = TranscriptionRequest(
