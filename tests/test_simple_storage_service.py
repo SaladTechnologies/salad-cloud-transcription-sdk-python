@@ -5,7 +5,9 @@ import pytest
 from config import TestConfig
 
 # Import RequestError from the SDK
-from salad_cloud_transcription_sdk.models.file_upload_response import FileUploadResponse
+from salad_cloud_transcription_sdk.models.file_operation_response import (
+    FileOperationResponse,
+)
 from salad_cloud_transcription_sdk.net.transport import RequestError
 
 
@@ -27,7 +29,7 @@ def test_upload_small_file_with_signature(simple_storage_service):
 
             # Assert that the URL is returned
             assert repsonse is not None
-            assert isinstance(repsonse, FileUploadResponse)
+            assert isinstance(repsonse, FileOperationResponse)
             assert repsonse.url is not None
 
             print(repsonse.url)
@@ -39,9 +41,9 @@ def test_upload_small_file_with_signature(simple_storage_service):
         pass
 
 
-@pytest.mark.skip(
-    reason="Skipping this because it requires a large file to be placed on disk and configured here"
-)
+# @pytest.mark.skip(
+#     reason="Skipping this because it requires a large file to be placed on disk and configured here"
+# )
 def test_upload_large_file_with_signature(simple_storage_service):
     """Test that we can upload a large file by using the chunked upload logic."""
 
@@ -61,7 +63,7 @@ def test_upload_large_file_with_signature(simple_storage_service):
 
             # Assert that the URL is returned
             assert repsonse is not None
-            assert isinstance(repsonse, FileUploadResponse)
+            assert isinstance(repsonse, FileOperationResponse)
             assert repsonse.url is not None
 
             print(repsonse.url)

@@ -11,7 +11,7 @@ from .utils.base_service import BaseService
 from ..net.transport.serializer import Serializer
 from ..models.utils.cast_models import cast_models
 from ..net.environment.environment import Environment
-from ..models.file_upload_response import FileUploadResponse
+from ..models.file_operation_response import FileOperationResponse
 
 
 class HttpMethod(Enum):
@@ -58,7 +58,7 @@ class SimpleStorageService(BaseService):
         mime_type: Optional[str] = None,
         sign: bool = True,
         signature_exp: Optional[int] = DEFAULT_SIGNATURE_EXP,
-    ) -> FileUploadResponse:
+    ) -> FileOperationResponse:
         """Uploads a file to the Salad Cloud Storage Service
 
         :param organization_name: Your organization name. This identifies the billing context for the API operation and represents a security boundary for SaladCloud resources. The organization must be created before using the API, and you must be a member of the organization.
@@ -76,7 +76,7 @@ class SimpleStorageService(BaseService):
         :raises ValueError: If the file doesn't exist.
 
         :return: Response containing the URL where the file can be accessed
-        :rtype: FileUploadResponse
+        :rtype: FileOperationResponse
         """
 
         print(local_file_path)
@@ -122,13 +122,16 @@ class SimpleStorageService(BaseService):
                 sign=sign,
                 signature_exp=signature_exp,
             )
-            filename = os.path.basename(urlparse(file_response.url).path)
-            return self.sign_url(
-                filename=filename,
-                organization_name=organization_name,
-                method=HttpMethod.GET,
-                exp=signature_exp,
-            )
+            if sign:
+                filename = os.path.basename(urlparse(file_response.url).path)
+                return self.sign_url(
+                    filename=filename,
+                    organization_name=organization_name,
+                    method=HttpMethod.GET,
+                    exp=signature_exp,
+                )
+            else:
+                return file_response
 
     def _upload_file_direct(
         self,
@@ -138,7 +141,7 @@ class SimpleStorageService(BaseService):
         mime_type: str,
         sign: bool = True,
         signature_exp: Optional[int] = DEFAULT_SIGNATURE_EXP,
-    ) -> FileUploadResponse:
+    ) -> FileOperationResponse:
         """Directly uploads a file to Salad Cloud Storage (for files <= MAX_FILE_SIZE)
 
         :param organization_name: Organization name
@@ -148,7 +151,7 @@ class SimpleStorageService(BaseService):
         :param sign: Whether to sign the URL
         :param signature_exp: Expiration time for signature
         :return: Response containing the URL where the file can be accessed
-        :rtype: FileUploadResponse
+        :rtype: FileOperationResponse
         """
         # Open the file for upload
         with open(local_file_path, "rb") as file:
@@ -174,7 +177,7 @@ class SimpleStorageService(BaseService):
             )
 
             response, _, _ = self.send_request(serialized_request)
-            return FileUploadResponse._unmap(response)
+            return FileOperationResponse._unmap(response)
 
     def _upload_file_in_parts(
         self,
@@ -185,7 +188,7 @@ class SimpleStorageService(BaseService):
         sign: bool = True,
         signature_exp: Optional[int] = DEFAULT_SIGNATURE_EXP,
         chunk_size: int = DEFAULT_CHUNK_SIZE,
-    ) -> FileUploadResponse:
+    ) -> FileOperationResponse:
         """Uploads a large file in parts (multipart upload)
 
         :param organization_name: Organization name
@@ -196,7 +199,7 @@ class SimpleStorageService(BaseService):
         :param signature_exp: Expiration time for signature
         :param chunk_size: Size of each chunk in bytes (default 80MB)
         :return: Response containing the URL where the file can be accessed
-        :rtype: FileUploadResponse
+        :rtype: FileOperationResponse
         """
         # Step 1: Create multipart upload
         serialized_create_request = (
@@ -266,13 +269,13 @@ class SimpleStorageService(BaseService):
         if isinstance(complete_response, str):
             try:
                 complete_response_dict = json.loads(complete_response)
-                return FileUploadResponse._unmap(complete_response_dict)
+                return FileOperationResponse._unmap(complete_response_dict)
             except (json.JSONDecodeError, KeyError) as e:
                 raise ValueError(
                     f"Failed to parse response: {complete_response}"
                 ) from e
 
-        return FileUploadResponse._unmap(complete_response)
+        return FileOperationResponse._unmap(complete_response)
 
     def delete_file(
         self,
@@ -318,7 +321,7 @@ class SimpleStorageService(BaseService):
         filename: str,
         method: Union[HttpMethod, str],
         exp: int,
-    ) -> FileUploadResponse:
+    ) -> FileOperationResponse:
         """Signs an URL
 
         :param organization_name: Your organization name. This identifies the billing context for the API operation and represents a security boundary for SaladCloud resources. The organization must be created before using the API, and you must be a member of the organization.
@@ -362,7 +365,7 @@ class SimpleStorageService(BaseService):
         )
 
         response, _, _ = self.send_request(serialized_request)
-        return FileUploadResponse._unmap(response)
+        return FileOperationResponse._unmap(response)
 
     def _determine_mime_type(self, filename: str) -> str:
         """Determines the MIME type based on the file extension

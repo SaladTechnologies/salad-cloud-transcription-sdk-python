@@ -6,11 +6,11 @@ from .utils.base_model import BaseModel
 
 
 @JsonMap({})
-class FileUploadResponse(BaseModel):
-    """This class represents the response from a successful file upload request."""
+class FileOperationResponse(BaseModel):
+    """This class represents the response from a file sign or upload request."""
 
     def __init__(self, url: str, **kwargs):
-        """Initialize a FileUploadResponse object
+        """Initialize a FileOperationResponse object
 
         :param url: The URL where the uploaded file can be accessed
         :type url: str
@@ -19,7 +19,7 @@ class FileUploadResponse(BaseModel):
         self._kwargs = kwargs
 
     def to_dict(self) -> Dict[str, Any]:
-        """Converts the FileUploadResponse object to a dictionary
+        """Converts the FileOperationResponse object to a dictionary
 
         :return: Dictionary representation of this instance
         :rtype: Dict[str, Any]
