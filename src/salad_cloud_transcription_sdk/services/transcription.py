@@ -12,6 +12,7 @@ from salad_cloud_sdk.models import (
 )
 from .utils.validator import Validator
 from .utils.base_service import BaseService
+from .utils.webhooks import Webhook, WebhookVerificationError
 from ..net.transport.serializer import Serializer
 from ..models.transcription_request import TranscriptionRequest
 from .simple_storage import SimpleStorageService
@@ -82,6 +83,8 @@ class TranscriptionService(BaseService):
 
         job_prototype = InferenceEndpointJobPrototype(
             input=request_dict,
+            webhook=request.webhook,
+            webhook_url=request.webhook,
         )
 
         print(job_prototype)
@@ -196,3 +199,45 @@ class TranscriptionService(BaseService):
             inference_endpoint_name=inference_endpoint_name,
             inference_endpoint_job_id=job_id,
         )
+
+    def process_webhook_request(
+        self,
+        payload: Any,
+        signing_secret: str,
+        webhook_id: str,
+        webhook_timestamp: str,
+        webhook_signature: str,
+    ) -> InferenceEndpointJob:
+        """Process a webhook request from Salad Cloud Transcription service.
+
+        :param payload: The webhook request payload (string or bytes)
+        :type payload: Any
+        :param signing_secret: The secret used for verifying the webhook signature
+        :type signing_secret: str
+        :param webhook_id: The webhook ID from the request header
+        :type webhook_id: str
+        :param webhook_timestamp: The timestamp from the request header
+        :type webhook_timestamp: str
+        :param webhook_signature: The signature from the request header
+        :type webhook_signature: str
+
+        :raises WebhookVerificationError: If signature validation fails
+
+        :return: The processed job result
+        :rtype: InferenceEndpointJob
+        """
+        # Create headers dictionary for verification
+        headers = {
+            "webhook-id": webhook_id,
+            "webhook-timestamp": webhook_timestamp,
+            "webhook-signature": webhook_signature,
+        }
+
+        # Initialize webhook validator with the signing secret
+        webhook = Webhook(signing_secret)
+
+        # Verify the payload signature
+        # This will raise WebhookVerificationError if validation fails
+        job_data = webhook.verify(payload, headers)
+
+        return InferenceEndpointJob._unmap(job_data)

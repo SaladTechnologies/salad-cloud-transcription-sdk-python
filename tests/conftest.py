@@ -1,3 +1,5 @@
+import os
+import json
 import pytest
 from config import TestConfig
 from salad_cloud_transcription_sdk.services.transcription import (
@@ -28,3 +30,11 @@ def simple_storage_service():
 @pytest.fixture(scope="session")
 def transcription_service():
     return TranscriptionService(api_key=TestConfig.API_KEY, base_url=TestConfig.API_URL)
+
+
+@pytest.fixture(scope="session")
+def webhook_data():
+    with open(
+        os.path.join("tests", "data", "webhooks.json"), "r", encoding="utf-8"
+    ) as f:
+        return json.load(f)

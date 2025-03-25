@@ -41,9 +41,9 @@ def test_upload_small_file_with_signature(simple_storage_service):
         pass
 
 
-# @pytest.mark.skip(
-#     reason="Skipping this because it requires a large file to be placed on disk and configured here"
-# )
+@pytest.mark.skip(
+    reason="Skipping this because it requires a large file to be placed on disk and configured here"
+)
 def test_upload_large_file_with_signature(simple_storage_service):
     """Test that we can upload a large file by using the chunked upload logic."""
 
