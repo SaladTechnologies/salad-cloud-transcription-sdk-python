@@ -107,7 +107,7 @@ class TranscriptionService(BaseService):
         if auto_poll:
             job_id = response.id_
             while True:
-                job = self.get_transcription_job(organization_name, job_id)
+                job = self._get_transcription_job_internal(organization_name, job_id)
                 if job.status in [
                     Status.SUCCEEDED.value,
                     Status.FAILED.value,
@@ -155,6 +155,12 @@ class TranscriptionService(BaseService):
         :return: The transcription job details
         :rtype: InferenceEndpointJob
         """
+
+        return self._get_transcription_job_internal(organization_name, job_id)
+
+    def _get_transcription_job_internal(
+        self, organization_name: str, job_id: str
+    ) -> InferenceEndpointJob:
         inference_endpoint_name = TRANSCRIPTION_ENDPOINT_NAME
         return self._salad_sdk.inference_endpoints.get_inference_endpoint_job(
             organization_name=organization_name,
