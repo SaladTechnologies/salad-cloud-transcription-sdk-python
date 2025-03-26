@@ -16,6 +16,8 @@ from .utils.base_service import BaseService
 from .utils.webhooks import Webhook, WebhookVerificationError
 from ..net.transport.serializer import Serializer
 from ..models.transcription_request import TranscriptionRequest
+from ..models.transcription_job_output import TranscriptionJobOutput
+from ..models.transcription_job_file_output import TranscriptionJobFileOutput
 from .simple_storage import SimpleStorageService
 from ..net.environment.environment import Environment, TRANSCRIPTION_ENDPOINT_NAME
 
@@ -92,8 +94,6 @@ class TranscriptionService(BaseService):
                 input=request_dict,
             )
 
-        print(job_prototype)
-
         # Use Salad SDK inference service to create the actual job
         inference_endpoint_name = TRANSCRIPTION_ENDPOINT_NAME
         response = self._salad_sdk.inference_endpoints.create_inference_endpoint_job(
@@ -101,6 +101,8 @@ class TranscriptionService(BaseService):
             organization_name=organization_name,
             inference_endpoint_name=inference_endpoint_name,
         )
+
+        job = response
 
         # If auto_poll is enabled, let's wait for the transcription to complete
         # Polls every 5 seconds, if enabled
@@ -113,10 +115,13 @@ class TranscriptionService(BaseService):
                     Status.FAILED.value,
                     Status.CANCELLED.value,
                 ]:
-                    return job
+                    break
                 time.sleep(5)
 
-        return response
+        # Convert job output to appropriate type if possible
+        self._convert_job_output(job)
+
+        return job
 
     def _process_source(self, source: str, organization_name: str) -> str:
         """Process the source to determine if it's a URL or local file and handle accordingly
@@ -155,18 +160,21 @@ class TranscriptionService(BaseService):
         :return: The transcription job details
         :rtype: InferenceEndpointJob
         """
-
         return self._get_transcription_job_internal(organization_name, job_id)
 
     def _get_transcription_job_internal(
         self, organization_name: str, job_id: str
     ) -> InferenceEndpointJob:
         inference_endpoint_name = TRANSCRIPTION_ENDPOINT_NAME
-        return self._salad_sdk.inference_endpoints.get_inference_endpoint_job(
+        job = self._salad_sdk.inference_endpoints.get_inference_endpoint_job(
             organization_name=organization_name,
             inference_endpoint_name=inference_endpoint_name,
             inference_endpoint_job_id=job_id,
         )
+
+        # Convert job output to appropriate type if possible
+        self._convert_job_output(job)
+        return job
 
     def list_transcription_jobs(
         self,
@@ -251,4 +259,28 @@ class TranscriptionService(BaseService):
         # This will raise WebhookVerificationError if validation fails
         job_data = webhook.verify(payload, headers)
 
-        return InferenceEndpointJob._unmap(job_data)
+        job = InferenceEndpointJob._unmap(job_data)
+
+        # Convert job output to appropriate type if possible
+        job = self._convert_job_output(job)
+
+        return job
+
+    def _convert_job_output(self, job: InferenceEndpointJob) -> InferenceEndpointJob:
+        """Converts job output to appropriate output model if possible
+
+        :param job: The job with output to convert
+        :type job: InferenceEndpointJob
+        :return: The job with converted output
+        :rtype: InferenceEndpointJob
+        """
+        if hasattr(job, "output") and job.output is not None:
+            try:
+                job.output = TranscriptionJobOutput.from_json(job.output)
+            except (ValueError, KeyError, TypeError):
+                try:
+                    job.output = TranscriptionJobFileOutput.from_json(job.output)
+                except (ValueError, KeyError, TypeError):
+                    # If conversion fails, leave the output as is
+                    pass
+        return job

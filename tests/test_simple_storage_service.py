@@ -11,8 +11,7 @@ from salad_cloud_transcription_sdk.models.file_operation_response import (
 from salad_cloud_transcription_sdk.net.transport import RequestError
 
 
-@pytest.mark.asyncio
-async def test_upload_small_file_with_signature(simple_storage_service):
+def test_upload_small_file_with_signature(simple_storage_service):
     """Test that we can upload a small file with a signature."""
 
     local_file_path = os.path.join("tests", "data", "small_video.mp4")
@@ -42,11 +41,10 @@ async def test_upload_small_file_with_signature(simple_storage_service):
         pass
 
 
-@pytest.mark.asyncio
 # @pytest.mark.skip(
 #     reason="Skipping this because it requires a large file to be placed on disk and configured here"
 # )
-async def test_upload_large_file_with_signature(simple_storage_service):
+def test_upload_large_file_with_signature(simple_storage_service):
     """Test that we can upload a large file by using the chunked upload logic."""
 
     base_path = r"C:\Users\marcel\Downloads"
