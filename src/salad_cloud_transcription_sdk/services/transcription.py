@@ -1,3 +1,4 @@
+import asyncio
 import json
 import os
 import time
@@ -35,16 +36,15 @@ class TranscriptionService(BaseService):
         :param api_key: The API key for authentication.
         :type api_key: Optional[str]
         """
-        self._base_url = (
-            base_url.value if isinstance(base_url, Environment) else base_url
-        )
-        super().__init__(base_url)
+        _base_url = base_url.value if isinstance(base_url, Environment) else base_url
+
+        super().__init__(_base_url)
 
         if api_key:
             self.set_api_key(api_key)
 
         self._storage_service = SimpleStorageService(api_key=api_key)
-        self._salad_sdk = SaladCloudSdk(api_key=api_key, base_url=base_url)
+        self._salad_sdk = SaladCloudSdk(api_key=api_key, base_url=_base_url)
 
     def transcribe(
         self,
@@ -81,11 +81,16 @@ class TranscriptionService(BaseService):
         request_dict = request.to_dict()["input"]
         request_dict["url"] = file_url
 
-        job_prototype = InferenceEndpointJobPrototype(
-            input=request_dict,
-            webhook=request.webhook,
-            webhook_url=request.webhook,
-        )
+        if request.webhook is not None:
+            job_prototype = InferenceEndpointJobPrototype(
+                input=request_dict,
+                webhook=request.webhook or None,
+                webhook_url=request.webhook or None,
+            )
+        else:
+            job_prototype = InferenceEndpointJobPrototype(
+                input=request_dict,
+            )
 
         print(job_prototype)
 

@@ -44,9 +44,6 @@ class SimpleStorageService(BaseService):
         :type api_key: Optional[str]
         """
         _base_url = base_url.value if isinstance(base_url, Environment) else base_url
-        print()
-        print(_base_url)
-        print()
         super().__init__(_base_url)
         if api_key:
             self.set_api_key(api_key)
@@ -124,7 +121,7 @@ class SimpleStorageService(BaseService):
             )
             if sign:
                 filename = os.path.basename(urlparse(file_response.url).path)
-                return self.sign_url(
+                return self._sign_url_internal(
                     filename=filename,
                     organization_name=organization_name,
                     method=HttpMethod.GET,
@@ -335,6 +332,47 @@ class SimpleStorageService(BaseService):
 
         """
 
+        return self._sign_url_internal(
+            organization_name=organization_name,
+            filename=filename,
+            method=method,
+            exp=exp,
+        )
+
+    def _determine_mime_type(self, filename: str) -> str:
+        """Determines the MIME type based on the file extension
+
+        :param filename: The filename to determine the MIME type for
+        :type filename: str
+
+        :return: The MIME type
+        :rtype: str
+        """
+        extension = os.path.splitext(filename)[1].lower()
+        mime_map = {
+            # Audio formats
+            ".aiff": "audio/aiff",
+            ".flac": "audio/flac",
+            ".m4a": "audio/mp4",
+            ".mp3": "audio/mpeg",
+            ".wav": "audio/wav",
+            # Video formats
+            ".mkv": "video/x-matroska",
+            ".mov": "video/quicktime",
+            ".webm": "video/webm",
+            ".wma": "audio/x-ms-wma",
+            ".mp4": "video/mp4",
+        }
+        return mime_map.get(extension, "application/octet-stream")
+
+    @cast_models
+    def _sign_url_internal(
+        self,
+        organization_name: str,
+        filename: str,
+        method: Union[HttpMethod, str],
+        exp: int,
+    ) -> FileOperationResponse:
         Validator(str).min_length(2).max_length(63).pattern(
             "^[a-z][a-z0-9-]{0,61}[a-z0-9]$"
         ).validate(organization_name)
@@ -366,29 +404,3 @@ class SimpleStorageService(BaseService):
 
         response, _, _ = self.send_request(serialized_request)
         return FileOperationResponse._unmap(response)
-
-    def _determine_mime_type(self, filename: str) -> str:
-        """Determines the MIME type based on the file extension
-
-        :param filename: The filename to determine the MIME type for
-        :type filename: str
-
-        :return: The MIME type
-        :rtype: str
-        """
-        extension = os.path.splitext(filename)[1].lower()
-        mime_map = {
-            # Audio formats
-            ".aiff": "audio/aiff",
-            ".flac": "audio/flac",
-            ".m4a": "audio/mp4",
-            ".mp3": "audio/mpeg",
-            ".wav": "audio/wav",
-            # Video formats
-            ".mkv": "video/x-matroska",
-            ".mov": "video/quicktime",
-            ".webm": "video/webm",
-            ".wma": "audio/x-ms-wma",
-            ".mp4": "video/mp4",
-        }
-        return mime_map.get(extension, "application/octet-stream")
