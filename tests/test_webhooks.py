@@ -14,7 +14,7 @@ def get_webhook_signing_secret(api_key, api_url, organization_name):
     secret_key = secret_key_service.get_webhook_secret_key(organization_name)
 
     print(secret_key)
-    return secret_key.secret
+    return secret_key.secret_key
 
 
 def test_process_webhook_request(transcription_service, webhook_data, test_config):
@@ -32,6 +32,15 @@ def test_process_webhook_request(transcription_service, webhook_data, test_confi
         organization_name=test_config.ORGANIZATION_NAME,
     )
 
+    print(webhook_id)
+    print()
+    print(webhook_timestamp)
+    print()
+    print(webhook_signature)
+    print()
+    print(signing_secret)
+    print()
+
     result = transcription_service.process_webhook_request(
         payload=payload,
         signing_secret=signing_secret,
@@ -48,6 +57,35 @@ def test_process_webhook_request(transcription_service, webhook_data, test_confi
         == webhook_event["payload"]["data"]["organization_name"]
     )
     assert result.webhook == webhook_event["payload"]["data"]["webhook"]
+
+
+def test_process_webhook_when_timestamp_too_old(
+    transcription_service, webhook_timestamp_too_old_data, test_config
+):
+    """Test processing a webhook request with a timestamp that is too old"""
+    webhook_event = webhook_timestamp_too_old_data[0]
+
+    payload = json.dumps(webhook_event["payload"])
+    webhook_id = webhook_event["webhook_id"]
+    webhook_timestamp = webhook_event["webhook_timestamp"]
+    webhook_signature = webhook_event["webhook_signature"]
+
+    signing_secret = get_webhook_signing_secret(
+        api_key=test_config.API_KEY,
+        api_url=test_config.API_URL,
+        organization_name=test_config.ORGANIZATION_NAME,
+    )
+
+    with pytest.raises(WebhookVerificationError) as excinfo:
+        transcription_service.process_webhook_request(
+            payload=payload,
+            signing_secret=signing_secret,
+            webhook_id=webhook_id,
+            webhook_timestamp=webhook_timestamp,
+            webhook_signature=webhook_signature,
+        )
+
+    assert "Message timestamp too old" in str(excinfo.value)
 
 
 def test_process_webhook_request_invalid_signature(

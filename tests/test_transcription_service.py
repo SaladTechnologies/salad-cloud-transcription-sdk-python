@@ -85,9 +85,9 @@ def test_transcribe_local_file(transcription_service):
     assert retrieved_job.id_ == job.id_
 
 
-@pytest.mark.skip(
-    reason="Skipping this because it requires a webhook to be configured manually"
-)
+# @pytest.mark.skip(
+#     reason="Skipping this because it requires a webhook to be configured manually"
+# )
 def test_transcribe_local_file_with_webhook(transcription_service):
     """Test transcribing a local file"""
     request = TranscriptionRequest(
@@ -116,7 +116,7 @@ def test_transcribe_local_file_with_webhook(transcription_service):
             ],
         ),
         metadata={"test_id": "integration_test", "environment": "testing"},
-        webhook="",
+        webhook="https://webhook.site/a8efbfcb-6b57-49f2-a389-5e58f3a6cb45",
     )
 
     local_file_path = os.path.join("tests", "data", "small_video.mp4")

@@ -414,14 +414,14 @@ use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
 
 [[package]]
 name = "salad-cloud-sdk"
-version = "0.9.0a8"
+version = "0.9.0a9"
 description = "The SaladCloud REST API. Please refer to the [SaladCloud API Documentation](https://docs.salad.com/api-reference) for more details."
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "salad_cloud_sdk-0.9.0a8-py3-none-any.whl", hash = "sha256:7f6d348c1a861f7fccca7f1c8674c09d489808dc434bd3717ac2c03aca2d138a"},
-    {file = "salad_cloud_sdk-0.9.0a8.tar.gz", hash = "sha256:7304fc06422fd231a1f087737d3e5125686aabf7667712bd7a8833f772843ee5"},
+    {file = "salad_cloud_sdk-0.9.0a9-py3-none-any.whl", hash = "sha256:4a646d015b174dabee7624792015f2cfbf5361b3b501a34c1e34c4138484cc54"},
+    {file = "salad_cloud_sdk-0.9.0a9.tar.gz", hash = "sha256:3455c87873b4ed87be739f8522dcdbb1973e4596333a41ab184412a32a9b9366"},
 ]
 
 [package.dependencies]
