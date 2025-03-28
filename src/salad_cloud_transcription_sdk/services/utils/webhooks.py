@@ -73,8 +73,8 @@ class Webhook:
         except Exception:
             raise WebhookVerificationError("Invalid Signature Headers")
 
-        # if timestamp < (now - webhook_tolerance):
-        #     raise WebhookVerificationError("Message timestamp too old")
-        # if timestamp > (now + webhook_tolerance):
-        #     raise WebhookVerificationError("Message timestamp too new")
+        if timestamp < (now - webhook_tolerance):
+            raise WebhookVerificationError("Message timestamp too old")
+        if timestamp > (now + webhook_tolerance):
+            raise WebhookVerificationError("Message timestamp too new")
         return timestamp
