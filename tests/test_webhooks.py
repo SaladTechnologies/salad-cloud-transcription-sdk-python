@@ -81,10 +81,10 @@ def test_process_webhook_when_timestamp_too_old(
 
 
 def test_process_webhook_request_invalid_signature(
-    transcription_service, webhook_data, test_config
+    transcription_service, webhook_timestamp_too_old_data, test_config
 ):
     """Test processing a webhook request with invalid signature"""
-    webhook_event = webhook_data[0]
+    webhook_event = webhook_timestamp_too_old_data[0]
 
     payload = json.dumps(webhook_event["payload"])
     webhook_id = webhook_event["webhook_id"]
