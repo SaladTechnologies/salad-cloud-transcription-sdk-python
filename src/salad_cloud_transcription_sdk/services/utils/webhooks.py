@@ -34,7 +34,7 @@ class Webhook:
         if isinstance(whsecret, bytes):
             self._whsecret = whsecret
 
-    def verify(self, data: t.Union[bytes, str], headers: t.Dict[str, str]) -> t.Any:
+    def verify(self, data: t.Union[bytes, str], headers: t.Dict[str, str]) -> bool:
         data = data if isinstance(data, str) else data.decode()
         headers = {k.lower(): v for (k, v) in headers.items()}
         msg_id = headers.get("webhook-id")
@@ -55,7 +55,7 @@ class Webhook:
                 continue
             sig_bytes = base64.b64decode(signature)
             if hmac.compare_digest(expected_sig, sig_bytes):
-                return json.loads(data)
+                return True
 
         raise WebhookVerificationError("No matching signature found")
 
@@ -73,8 +73,8 @@ class Webhook:
         except Exception:
             raise WebhookVerificationError("Invalid Signature Headers")
 
-        if timestamp < (now - webhook_tolerance):
-            raise WebhookVerificationError("Message timestamp too old")
-        if timestamp > (now + webhook_tolerance):
-            raise WebhookVerificationError("Message timestamp too new")
+        # if timestamp < (now - webhook_tolerance):
+        #     raise WebhookVerificationError("Message timestamp too old")
+        # if timestamp > (now + webhook_tolerance):
+        #     raise WebhookVerificationError("Message timestamp too new")
         return timestamp

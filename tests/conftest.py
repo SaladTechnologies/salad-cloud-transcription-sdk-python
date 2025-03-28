@@ -40,11 +40,21 @@ def transcription_service():
 
 
 @pytest.fixture(scope="session")
-def webhook_data():
+def webhook_timestamp_too_old_data():
     with open(
-        os.path.join("tests", "data", "webhooks.json"), "r", encoding="utf-8"
+        os.path.join("tests", "data", "webhooks_timestamp_too_old.json"),
+        "r",
+        encoding="utf-8",
     ) as f:
         return json.load(f)
+
+
+@pytest.fixture(scope="session")
+def webhook_data():
+    with open(
+        os.path.join("tests", "data", "webhooks.txt"), "r", encoding="utf-8"
+    ) as f:
+        return f.read()
 
 
 @pytest_asyncio.fixture

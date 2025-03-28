@@ -11,6 +11,9 @@ from salad_cloud_sdk.models import (
     InferenceEndpointJob,
     Status,
 )
+from salad_cloud_transcription_sdk.models.transcription_webhook_payload import (
+    TranscriptionWebhookPayload,
+)
 from .utils.validator import Validator
 from .utils.base_service import BaseService
 from .utils.webhooks import Webhook, WebhookVerificationError
@@ -226,7 +229,7 @@ class TranscriptionService(BaseService):
         webhook_id: str,
         webhook_timestamp: str,
         webhook_signature: str,
-    ) -> InferenceEndpointJob:
+    ) -> TranscriptionWebhookPayload:
         """Process a webhook request from Salad Cloud Transcription service.
 
         :param payload: The webhook request payload (string or bytes)
@@ -257,14 +260,14 @@ class TranscriptionService(BaseService):
 
         # Verify the payload signature
         # This will raise WebhookVerificationError if validation fails
-        job_data = webhook.verify(payload, headers)
+        if webhook.verify(payload, headers):
+            deserialized_payload = TranscriptionWebhookPayload.from_json(payload)
+            deserialized_payload.data = self._convert_job_output(
+                deserialized_payload.data
+            )
+            return deserialized_payload
 
-        job = InferenceEndpointJob._unmap(job_data)
-
-        # Convert job output to appropriate type if possible
-        job = self._convert_job_output(job)
-
-        return job
+        return None
 
     def _convert_job_output(self, job: InferenceEndpointJob) -> InferenceEndpointJob:
         """Converts job output to appropriate output model if possible

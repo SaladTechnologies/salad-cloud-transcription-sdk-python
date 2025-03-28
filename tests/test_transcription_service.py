@@ -60,7 +60,7 @@ def test_transcribe_local_file(transcription_service):
             auto_poll=True,
             request=request,
         )
-
+        print(job)
     except RequestError as e:
         error_details = {"message": str(e), "response_body": e.response.__str__()}
         print(f"RequestError: {json.dumps(error_details, indent=4)}")
@@ -85,9 +85,9 @@ def test_transcribe_local_file(transcription_service):
     assert retrieved_job.id_ == job.id_
 
 
-# @pytest.mark.skip(
-#     reason="Skipping this because it requires a webhook to be configured manually"
-# )
+@pytest.mark.skip(
+    reason="Skipping this because it requires a webhook to be configured manually"
+)
 def test_transcribe_local_file_with_webhook(transcription_service):
     """Test transcribing a local file"""
     request = TranscriptionRequest(
