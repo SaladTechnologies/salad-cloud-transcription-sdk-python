@@ -254,3 +254,5 @@ cython_debug/
 
 # Built Visual Studio Code Extensions
 *.vsix
+
+.env.development

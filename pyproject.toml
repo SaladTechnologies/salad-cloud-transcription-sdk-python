@@ -8,7 +8,7 @@ version = "0.9.0-alpha.1"
 license = { text = "MIT" }
 description = """The SaladCloud Transcription SDK. Please refer to the [SaladCloud API Documentation](https://docs.salad.com/api-reference) for more details."""
 readme = "PyPI_README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.9"
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -28,7 +28,9 @@ classifiers = [
     "Topic :: Software Development :: Libraries"
 ]
 dependencies = [
-    "requests>=2.31.0"
+    "requests>=2.31.0",
+    "salad-cloud-sdk (>=0.9.0a8,<0.10.0)",
+    "pytest-asyncio (>=0.26.0,<0.27.0)"
 ]
 
 [project.urls]
@@ -36,3 +38,17 @@ Homepage = "https://github.com/saladtechnologies/salad-cloud-transcription-sdk-p
 Documentation = "https://docs.salad.com"
 Repository = "https://github.com/SaladTechnologies/salad-cloud-transcription-sdk-python.git"
 Issues = "https://github.com/SaladTechnologies/salad-cloud-transcription-sdk-python/issues"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.5"
+pytest-cov = "^6.0.0"
+python-dotenv = "^1.0.1"
+debugpy = "^1.8.13"
+
+[tool.pytest.ini_options]
+pythonpath = [
+  ".", "tests"
+]
+env = [
+    "PYTHONPATH=.:tests"
+]
