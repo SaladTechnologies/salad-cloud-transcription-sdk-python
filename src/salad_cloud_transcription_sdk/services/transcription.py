@@ -267,7 +267,7 @@ class TranscriptionService(BaseService):
             )
             return deserialized_payload
 
-        return None
+        raise WebhookVerificationError("Signature validation failed.")
 
     def _convert_job_output(self, job: InferenceEndpointJob) -> InferenceEndpointJob:
         """Converts job output to appropriate output model if possible

@@ -293,7 +293,7 @@ class SimpleStorageService(BaseService):
         """
 
         Validator(str).min_length(2).max_length(63).pattern(
-            "^[a-z][a-z0-61}[a-z0-9]$"
+            "^[a-z][a-z0-9-]{0,61}[a-z0-9]$"
         ).validate(organization_name)
         Validator(str).validate(filename)
 
