@@ -45,6 +45,8 @@ def test_process_webhook_request(transcription_service, webhook_data, test_confi
         webhook_signature=webhook_signature,
     )
 
+    print(result)
+
     assert result is not None
     assert isinstance(result, TranscriptionWebhookPayload)
     assert result.data is not None

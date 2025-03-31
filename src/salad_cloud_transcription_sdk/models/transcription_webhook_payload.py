@@ -79,11 +79,19 @@ class TranscriptionWebhookPayload(BaseModel):
         """
         import json
 
-        if isinstance(json_data, dict):
-            data = json_data
-        else:
+        # Preprocess the JSON to rename 'type' to 'action' in 'data -> events'
+        if isinstance(json_data, (str, bytes)):
             if isinstance(json_data, bytes):
                 json_data = json_data.decode("utf-8")
-            data = json.loads(json_data)
+            json_data = json.loads(json_data)
 
-        return cls(**data)
+        if (
+            isinstance(json_data, dict)
+            and "data" in json_data
+            and "events" in json_data["data"]
+        ):
+            for event in json_data["data"]["events"]:
+                if isinstance(event, dict) and "type" in event:
+                    event["action"] = event.pop("type")
+
+        return cls(**json_data)
