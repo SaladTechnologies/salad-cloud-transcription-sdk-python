@@ -11,7 +11,7 @@ from salad_cloud_sdk import SaladCloudSdk
 
 
 def get_webhook_signing_secret(api_key, api_url, organization_name):
-    """Retrieve the real webhook signing secret using the SDK"""
+    """Retrieve the webhook signing secret using the SDK"""
     sdk = SaladCloudSdk(api_key=api_key, base_url=api_url)
     secret_key_service = sdk.webhook_secret_key
     secret_key = secret_key_service.get_webhook_secret_key(organization_name)
