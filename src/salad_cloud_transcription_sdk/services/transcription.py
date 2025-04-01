@@ -28,6 +28,9 @@ from ..net.environment.environment import Environment, TRANSCRIPTION_ENDPOINT_NA
 class TranscriptionService(BaseService):
     """Service for interacting with Salad Cloud Transcription API"""
 
+    # Maximum polling duration in seconds (30 minutes)
+    MAX_POLLING_DURATION = 1800
+
     def __init__(
         self,
         base_url: Union[Environment, str] = Environment.DEFAULT_SALAD_API_URL,
@@ -45,9 +48,13 @@ class TranscriptionService(BaseService):
 
         super().__init__(_base_url)
 
-        if api_key:
-            self.set_api_key(api_key)
+        api_key = (api_key or "").strip()
+        if not api_key:
+            raise ValueError(
+                "The API key cannot be empty. Retrieve your Salad API key and set it here."
+            )
 
+        self.set_api_key(api_key)
         self._storage_service = SimpleStorageService(api_key=api_key)
         self._salad_sdk = SaladCloudSdk(api_key=api_key, base_url=_base_url)
 
@@ -57,6 +64,7 @@ class TranscriptionService(BaseService):
         organization_name: str,
         request: TranscriptionRequest,
         auto_poll: bool = False,
+        max_polling_duration: int = MAX_POLLING_DURATION,
     ) -> InferenceEndpointJob:
         """Creates a new transcription job
 
@@ -68,13 +76,21 @@ class TranscriptionService(BaseService):
         :type request: TranscriptionRequest
         :param auto_poll: Whether to block until the transcription is complete, or return immediately
         :type auto_poll: bool, optional (default=False)
+        :param max_polling_duration: Maximum duration in seconds to poll for job completion
+        :type max_polling_duration: int, optional (default=1800 meaning 30 minutes)
 
         :raises RequestError: Raised when a request fails.
         :raises ValueError: Raised when input parameters are invalid.
+        :raises TimeoutError: Raised when polling exceeds the maximum duration.
 
         :return: The transcription job details
         :rtype: InferenceEndpointJob
         """
+        if source is None or not source.strip():
+            raise ValueError("The source file path or URL cannot be empty.")
+
+        if not isinstance(request, TranscriptionRequest):
+            raise ValueError("The request must be an instance of TranscriptionRequest.")
 
         Validator(str).min_length(2).max_length(63).pattern(
             "^[a-z][a-z0-9-]{0,61}[a-z0-9]$"
@@ -106,19 +122,27 @@ class TranscriptionService(BaseService):
         )
 
         job = response
+        print(job.status)
 
         # If auto_poll is enabled, let's wait for the transcription to complete
         # Polls every 5 seconds, if enabled
         if auto_poll:
             job_id = response.id_
-            while True:
+            start_time = time.time()
+
+            while job.status not in [
+                Status.SUCCEEDED.value,
+                Status.FAILED.value,
+                Status.CANCELLED.value,
+            ]:
+                print(job.status)
+                # Check if we've exceeded the maximum polling duration
+                if time.time() - start_time > max_polling_duration:
+                    raise TimeoutError(
+                        f"Transcription polling exceeded maximum duration of {max_polling_duration/60} minutes"
+                    )
+
                 job = self._get_transcription_job_internal(organization_name, job_id)
-                if job.status in [
-                    Status.SUCCEEDED.value,
-                    Status.FAILED.value,
-                    Status.CANCELLED.value,
-                ]:
-                    break
                 time.sleep(5)
 
         # Convert job output to appropriate type if possible
