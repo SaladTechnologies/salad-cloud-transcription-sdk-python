@@ -61,6 +61,15 @@ sdk.set_api_key("YOUR_API_KEY")
 
 ## Sample Usage
 
+### The *source* parameter
+All transcription methods of the `SaladCloudTranscriptionSdk` take a source parameter - the input file for the transcription job. 
+
+The `source` can be a path pointing to a local file, like `/usr/share/my_video_project.mp4`. Or, it can be an URL, like `https://myserver.net/files/my_video_project.mp4`. 
+
+When a local file is specified, the SDK will take care to upload that to the Saldad Simple Storage Service (S4) behind the scenes. When the upload is completed, the transcription job is run using as input an S4 URL.
+
+When a remote file is specified, that URL is passed as-is to the transcription engine. Make sure the file is publicly accessible.  
+
 ### Start a Transcription Job and wait for it to complete
 
 ```python
@@ -72,7 +81,7 @@ sdk = SaladCloudTranscriptionSdk(api_key="your_api_key")
 # Start a transcription job and wait for the result
 # When the job is processed, this function returns a InferenceEndpointJob
 result = sdk.transcription_client.transcribe(
-    "path/to/audio.mp3",
+    source = "path/to/audio.mp3",
     auto_poll = True)
 
 # The output property of the InferenceEndpointJob is a either a TranscriptionJobFileOutput 
@@ -89,7 +98,8 @@ from salad_cloud_transcription import SaladCloudTranscriptionSdk
 sdk = SaladCloudTranscriptionSdk(api_key="your_api_key")
 
 # Start a transcription job. auto_poll = False
-job = sdk.transcription_client.start_transcription_job("path/to/audio.mp3")
+job = sdk.transcription_client.start_transcription_job(
+    source = "path/to/audio.mp3")
 
 # Poll for the job status
 while True:
@@ -118,7 +128,7 @@ sdk = SaladCloudTranscriptionSdk(api_key="your_api_key")
 
 # Start a transcription job with a webhook URL
 job = sdk.transcription_client.start_transcription_job(
-    "path/to/audio.mp3",
+    source = "path/to/audio.mp3",
     webhook_url="https://your-webhook-endpoint.com"
 )
 
