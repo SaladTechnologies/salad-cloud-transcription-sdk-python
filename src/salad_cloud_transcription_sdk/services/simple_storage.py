@@ -1,5 +1,6 @@
 import os
 import json
+import uuid
 from urllib.parse import urlparse
 import requests
 from pathlib import Path
@@ -150,12 +151,15 @@ class SimpleStorageService(BaseService):
         :return: Response containing the URL where the file can be accessed
         :rtype: FileOperationResponse
         """
+        name_part, ext_part = os.path.splitext(filename)
+        unique_filename = f"{name_part}_{uuid.uuid4()}{ext_part}"
+
         # Open the file for upload
         with open(local_file_path, "rb") as file:
             file_content = file.read()
 
             # Create multipart form data
-            body = {"file_name": filename, "sign": sign, "file": file_content}
+            body = {"file_name": unique_filename, "sign": sign, "file": file_content}
 
             if signature_exp is not None:
                 Validator(int).min(1).validate(signature_exp)
@@ -167,7 +171,7 @@ class SimpleStorageService(BaseService):
                     [self.get_api_key()],
                 )
                 .add_path("organization_name", organization_name)
-                .add_path("filename", filename)
+                .add_path("filename", unique_filename)
                 .serialize()
                 .set_method("PUT")
                 .set_body(body, "multipart/form-data")
@@ -198,6 +202,10 @@ class SimpleStorageService(BaseService):
         :return: Response containing the URL where the file can be accessed
         :rtype: FileOperationResponse
         """
+
+        name_part, ext_part = os.path.splitext(filename)
+        unique_filename = f"{name_part}_{uuid.uuid4()}{ext_part}"
+
         # Step 1: Create multipart upload
         serialized_create_request = (
             Serializer(
@@ -205,7 +213,7 @@ class SimpleStorageService(BaseService):
                 [self.get_api_key()],
             )
             .add_path("organization_name", organization_name)
-            .add_path("filename", filename)
+            .add_path("filename", unique_filename)
             .add_query("action", "mpu-create")
             .serialize()
             .set_method("PUT")
@@ -230,7 +238,7 @@ class SimpleStorageService(BaseService):
                         [self.get_api_key()],
                     )
                     .add_path("organization_name", organization_name)
-                    .add_path("filename", filename)
+                    .add_path("filename", unique_filename)
                     .add_query("partNumber", part_number)
                     .add_query("uploadId", upload_id)
                     .serialize()
@@ -251,7 +259,7 @@ class SimpleStorageService(BaseService):
                 [self.get_api_key()],
             )
             .add_path("organization_name", organization_name)
-            .add_path("filename", filename)
+            .add_path("filename", unique_filename)
             .add_query("action", "mpu-complete")
             .add_query("uploadId", upload_id)
             .serialize()
