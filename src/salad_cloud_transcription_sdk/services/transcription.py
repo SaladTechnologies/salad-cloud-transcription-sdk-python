@@ -22,7 +22,16 @@ from ..models.transcription_request import TranscriptionRequest
 from ..models.transcription_job_output import TranscriptionJobOutput
 from ..models.transcription_job_file_output import TranscriptionJobFileOutput
 from .simple_storage import SimpleStorageService
-from ..net.environment.environment import Environment, TRANSCRIPTION_ENDPOINT_NAME
+from ..net.environment.environment import (
+    Environment,
+    COMPLETE_TRANSCRIPTION_ENDPOINT_NAME,
+    LITE_TRANSCRIPTION_ENDPOINT_NAME,
+)
+from ..models.transcription_engine import TranscriptionEngine
+
+# Constants for endpoint names
+COMPLETE_TRANSCRIPTION_ENDPOINT_NAME = "whisper"
+LITE_TRANSCRIPTION_ENDPOINT_NAME = "whisper-lite"
 
 
 class TranscriptionService(BaseService):
@@ -63,6 +72,7 @@ class TranscriptionService(BaseService):
         source: str,
         organization_name: str,
         request: TranscriptionRequest,
+        engine: TranscriptionEngine = TranscriptionEngine.Complete,
         auto_poll: bool = False,
         max_polling_duration: int = MAX_POLLING_DURATION,
     ) -> InferenceEndpointJob:
@@ -74,6 +84,8 @@ class TranscriptionService(BaseService):
         :type organization_name: str
         :param request: The transcription request options
         :type request: TranscriptionRequest
+        :param engine: The transcription engine to use (Complete or Lite)
+        :type engine: TranscriptionEngine, optional (default=TranscriptionEngine.Complete)
         :param auto_poll: Whether to block until the transcription is complete, or return immediately
         :type auto_poll: bool, optional (default=False)
         :param max_polling_duration: Maximum duration in seconds to poll for job completion
@@ -113,8 +125,14 @@ class TranscriptionService(BaseService):
                 input=request_dict,
             )
 
+        # Choose the appropriate endpoint based on engine type
+        inference_endpoint_name = (
+            LITE_TRANSCRIPTION_ENDPOINT_NAME
+            if engine == TranscriptionEngine.Lite
+            else COMPLETE_TRANSCRIPTION_ENDPOINT_NAME
+        )
+
         # Use Salad SDK inference service to create the actual job
-        inference_endpoint_name = TRANSCRIPTION_ENDPOINT_NAME
         response = self._salad_sdk.inference_endpoints.create_inference_endpoint_job(
             request_body=job_prototype,
             organization_name=organization_name,

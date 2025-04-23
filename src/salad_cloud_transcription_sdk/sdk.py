@@ -1,6 +1,7 @@
 from typing import Union, Optional
 from .services.transcription import TranscriptionService
 from .models.transcription_request import TranscriptionRequest
+from .models.transcription_engine import TranscriptionEngine
 from salad_cloud_sdk.models import InferenceEndpointJob, InferenceEndpointJobCollection
 
 from .net.environment import Environment
@@ -21,9 +22,11 @@ class SaladCloudTranscriptionSdk:
         self._base_url = (
             base_url.value if isinstance(base_url, Environment) else base_url
         )
-        
-        self.transcription = TranscriptionService(base_url=self._base_url, api_key=api_key)
-        
+
+        self.transcription = TranscriptionService(
+            base_url=self._base_url, api_key=api_key
+        )
+
         self.set_api_key(api_key, api_key_header)
         self.set_timeout(timeout)
 
@@ -32,6 +35,7 @@ class SaladCloudTranscriptionSdk:
         source: str,
         organization_name: str,
         request: TranscriptionRequest,
+        engine: TranscriptionEngine = TranscriptionEngine.Complete,
         auto_poll: bool = False,
     ) -> InferenceEndpointJob:
         """Creates a new transcription job
@@ -42,9 +46,11 @@ class SaladCloudTranscriptionSdk:
         :type organization_name: str
         :param request: The transcription request options
         :type request: TranscriptionRequest
+        :param engine: The transcription engine to use, defaults to TranscriptionEngine.Complete
+        :type engine: TranscriptionEngine, optional
         :param auto_poll: Whether to block until the transcription is complete, or return immediately
         :type auto_poll: bool, optional (default=False)
-        
+
         :return: The transcription job details
         :rtype: InferenceEndpointJob
         """
@@ -52,25 +58,27 @@ class SaladCloudTranscriptionSdk:
             source=source,
             organization_name=organization_name,
             request=request,
-            auto_poll=auto_poll
+            engine=engine,
+            auto_poll=auto_poll,
         )
-    
-    def get_transcription_job(self, organization_name: str, job_id: str) -> InferenceEndpointJob:
+
+    def get_transcription_job(
+        self, organization_name: str, job_id: str
+    ) -> InferenceEndpointJob:
         """Get the status of a transcription job
 
         :param organization_name: The organization name
         :type organization_name: str
         :param job_id: The transcription job ID
         :type job_id: str
-        
+
         :return: The transcription job details
         :rtype: InferenceEndpointJob
         """
         return self.transcription.get_transcription_job(
-            organization_name=organization_name,
-            job_id=job_id
+            organization_name=organization_name, job_id=job_id
         )
-    
+
     def delete_transcription_job(self, organization_name: str, job_id: str) -> None:
         """Cancels a transcription job
 
@@ -80,15 +88,14 @@ class SaladCloudTranscriptionSdk:
         :type job_id: str
         """
         return self.transcription.delete_transcription_job(
-            organization_name=organization_name,
-            job_id=job_id
+            organization_name=organization_name, job_id=job_id
         )
-    
+
     def list_transcription_jobs(
-        self, 
-        organization_name: str, 
-        page: Optional[int] = None, 
-        page_size: Optional[int] = None
+        self,
+        organization_name: str,
+        page: Optional[int] = None,
+        page_size: Optional[int] = None,
     ) -> InferenceEndpointJobCollection:
         """Lists all transcription jobs for an organization
 
@@ -98,14 +105,12 @@ class SaladCloudTranscriptionSdk:
         :type page: Optional[int], optional
         :param page_size: The maximum number of items per page, defaults to None
         :type page_size: Optional[int], optional
-        
+
         :return: Collection of transcription jobs
         :rtype: InferenceEndpointJobCollection
         """
         return self.transcription.list_transcription_jobs(
-            organization_name=organization_name,
-            page=page,
-            page_size=page_size
+            organization_name=organization_name, page=page, page_size=page_size
         )
 
     def set_base_url(self, base_url: Union[Environment, str]):
