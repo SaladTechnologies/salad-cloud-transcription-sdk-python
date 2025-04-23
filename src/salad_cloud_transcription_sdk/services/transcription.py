@@ -29,10 +29,6 @@ from ..net.environment.environment import (
 )
 from ..models.transcription_engine import TranscriptionEngine
 
-# Constants for endpoint names
-COMPLETE_TRANSCRIPTION_ENDPOINT_NAME = "whisper"
-LITE_TRANSCRIPTION_ENDPOINT_NAME = "whisper-lite"
-
 
 class TranscriptionService(BaseService):
     """Service for interacting with Salad Cloud Transcription API"""
