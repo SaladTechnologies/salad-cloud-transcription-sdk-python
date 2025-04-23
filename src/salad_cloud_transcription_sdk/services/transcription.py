@@ -63,6 +63,22 @@ class TranscriptionService(BaseService):
         self._storage_service = SimpleStorageService(api_key=api_key)
         self._salad_sdk = SaladCloudSdk(api_key=api_key, base_url=_base_url)
 
+    def _get_endpoint_name(
+        self, engine: TranscriptionEngine = TranscriptionEngine.Complete
+    ) -> str:
+        """Get the appropriate endpoint name based on the transcription engine
+
+        :param engine: The transcription engine to use
+        :type engine: TranscriptionEngine
+        :return: The endpoint name
+        :rtype: str
+        """
+        return (
+            LITE_TRANSCRIPTION_ENDPOINT_NAME
+            if engine == TranscriptionEngine.Lite
+            else COMPLETE_TRANSCRIPTION_ENDPOINT_NAME
+        )
+
     def transcribe(
         self,
         source: str,
@@ -122,11 +138,7 @@ class TranscriptionService(BaseService):
             )
 
         # Choose the appropriate endpoint based on engine type
-        inference_endpoint_name = (
-            LITE_TRANSCRIPTION_ENDPOINT_NAME
-            if engine == TranscriptionEngine.Lite
-            else COMPLETE_TRANSCRIPTION_ENDPOINT_NAME
-        )
+        inference_endpoint_name = self._get_endpoint_name(engine)
 
         # Use Salad SDK inference service to create the actual job
         response = self._salad_sdk.inference_endpoints.create_inference_endpoint_job(
@@ -156,7 +168,9 @@ class TranscriptionService(BaseService):
                         f"Transcription polling exceeded maximum duration of {max_polling_duration/60} minutes"
                     )
 
-                job = self._get_transcription_job_internal(organization_name, job_id)
+                job = self._get_transcription_job_internal(
+                    organization_name, job_id, engine
+                )
                 time.sleep(5)
 
         # Convert job output to appropriate type if possible
@@ -189,7 +203,10 @@ class TranscriptionService(BaseService):
             return upload_response.url
 
     def get_transcription_job(
-        self, organization_name: str, job_id: str
+        self,
+        organization_name: str,
+        job_id: str,
+        engine: TranscriptionEngine = TranscriptionEngine.Complete,
     ) -> InferenceEndpointJob:
         """Get a transcription job by providing the inference job ID
 
@@ -197,16 +214,21 @@ class TranscriptionService(BaseService):
         :type organization_name: str
         :param job_id: The transcription job ID
         :type job_id: str
+        :param engine: The transcription engine to use
+        :type engine: TranscriptionEngine, optional (default=TranscriptionEngine.Complete)
 
         :return: The transcription job details
         :rtype: InferenceEndpointJob
         """
-        return self._get_transcription_job_internal(organization_name, job_id)
+        return self._get_transcription_job_internal(organization_name, job_id, engine)
 
     def _get_transcription_job_internal(
-        self, organization_name: str, job_id: str
+        self,
+        organization_name: str,
+        job_id: str,
+        engine: TranscriptionEngine = TranscriptionEngine.Complete,
     ) -> InferenceEndpointJob:
-        inference_endpoint_name = TRANSCRIPTION_ENDPOINT_NAME
+        inference_endpoint_name = self._get_endpoint_name(engine)
         job = self._salad_sdk.inference_endpoints.get_inference_endpoint_job(
             organization_name=organization_name,
             inference_endpoint_name=inference_endpoint_name,
@@ -220,6 +242,7 @@ class TranscriptionService(BaseService):
     def list_transcription_jobs(
         self,
         organization_name: str,
+        engine: TranscriptionEngine = TranscriptionEngine.Complete,
         page: Optional[int] = None,
         page_size: Optional[int] = None,
     ):
@@ -227,6 +250,8 @@ class TranscriptionService(BaseService):
 
         :param organization_name: The organization name
         :type organization_name: str
+        :param engine: The transcription engine to use
+        :type engine: TranscriptionEngine, optional (default=TranscriptionEngine.Complete)
         :param page: The page number, defaults to None
         :type page: Optional[int], optional
         :param page_size: The maximum number of items per page, defaults to None
@@ -235,7 +260,7 @@ class TranscriptionService(BaseService):
         :return: Collection of transcription jobs
         :rtype: InferenceEndpointJobCollection
         """
-        inference_endpoint_name = TRANSCRIPTION_ENDPOINT_NAME
+        inference_endpoint_name = self._get_endpoint_name(engine)
         return self._salad_sdk.inference_endpoints.list_inference_endpoint_jobs(
             organization_name=organization_name,
             inference_endpoint_name=inference_endpoint_name,
@@ -243,17 +268,24 @@ class TranscriptionService(BaseService):
             page_size=page_size,
         )
 
-    def delete_transcription_job(self, organization_name: str, job_id: str) -> None:
+    def delete_transcription_job(
+        self,
+        organization_name: str,
+        job_id: str,
+        engine: TranscriptionEngine = TranscriptionEngine.Complete,
+    ) -> None:
         """Cancels a transcription job
 
         :param organization_name: The organization name
         :type organization_name: str
         :param job_id: The transcription job ID
         :type job_id: str
+        :param engine: The transcription engine to use
+        :type engine: TranscriptionEngine, optional (default=TranscriptionEngine.Complete)
 
         :raises RequestError: Raised when a request fails.
         """
-        inference_endpoint_name = TRANSCRIPTION_ENDPOINT_NAME
+        inference_endpoint_name = self._get_endpoint_name(engine)
         self._salad_sdk.inference_endpoints.delete_inference_endpoint_job(
             organization_name=organization_name,
             inference_endpoint_name=inference_endpoint_name,
@@ -318,10 +350,12 @@ class TranscriptionService(BaseService):
         if hasattr(job, "output") and job.output is not None:
             try:
                 job.output = TranscriptionJobOutput.from_json(job.output)
-            except (ValueError, KeyError, TypeError):
+            except (ValueError, KeyError, TypeError) as e:
+                print(f"Error converting to TranscriptionJobOutput: {e}")
                 try:
                     job.output = TranscriptionJobFileOutput.from_json(job.output)
-                except (ValueError, KeyError, TypeError):
+                except (ValueError, KeyError, TypeError) as e:
+                    print(f"Error converting to TranscriptionJobFileOutput: {e}")
                     # If conversion fails, leave the output as is
                     pass
         return job

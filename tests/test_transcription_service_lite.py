@@ -64,6 +64,9 @@ def test_lite_transcribe_local_file(transcription_service):
     assert job is not None
     assert job.id_ is not None
 
+    print(job.output)
+    print(type(job.output))
+
     assert isinstance(job.output, TranscriptionJobOutput)
     assert isinstance(job.output.text, str)
     assert isinstance(job.output.word_segments, list)
@@ -73,7 +76,9 @@ def test_lite_transcribe_local_file(transcription_service):
 
     # Verify we can retrieve the job
     retrieved_job = transcription_service.get_transcription_job(
-        organization_name=TestConfig.ORGANIZATION_NAME, job_id=job.id_
+        organization_name=TestConfig.ORGANIZATION_NAME,
+        job_id=job.id_,
+        engine=TranscriptionEngine.Lite,
     )
 
     assert retrieved_job.id_ == job.id_
@@ -127,7 +132,9 @@ def test_lite_transcribe_local_file_with_webhook(transcription_service):
 
     # Verify we can retrieve the job
     retrieved_job = transcription_service.get_transcription_job(
-        organization_name=TestConfig.ORGANIZATION_NAME, job_id=job.id_
+        organization_name=TestConfig.ORGANIZATION_NAME,
+        job_id=job.id_,
+        engine=TranscriptionEngine.Lite,
     )
 
     assert retrieved_job.id_ == job.id_
@@ -193,7 +200,9 @@ def test_lite_transcribe_remote_file(transcription_service, simple_storage_servi
 
     # Verify we can retrieve the job
     retrieved_job = transcription_service.get_transcription_job(
-        organization_name=TestConfig.ORGANIZATION_NAME, job_id=job.id_
+        organization_name=TestConfig.ORGANIZATION_NAME,
+        job_id=job.id_,
+        engine=TranscriptionEngine.Lite,
     )
 
     assert retrieved_job.id_ == job.id_
@@ -252,7 +261,9 @@ def test_lite_transcribe_should_return_file(transcription_service):
 
     # Verify we can retrieve the job
     retrieved_job = transcription_service.get_transcription_job(
-        organization_name=TestConfig.ORGANIZATION_NAME, job_id=job.id_
+        organization_name=TestConfig.ORGANIZATION_NAME,
+        job_id=job.id_,
+        engine=TranscriptionEngine.Lite,
     )
 
     assert isinstance(retrieved_job.output, TranscriptionJobFileOutput)

@@ -60,6 +60,8 @@ class TranscriptionJobFileOutput(BaseModel):
         """
         import json
 
+        print("hello")
+
         if isinstance(json_data, dict):
             data = json_data
         else:
