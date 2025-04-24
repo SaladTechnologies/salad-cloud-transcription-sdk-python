@@ -26,14 +26,34 @@ pip install salad-cloud-transcription
 
 ```python
 from salad_cloud_transcription import SaladCloudTranscriptionSdk
+from salad_cloud_transcription_sdk.models.transcription_engine import TranscriptionEngine
+from salad_cloud_transcription_sdk.models.transcription_request import TranscriptionRequest
+from salad_cloud_transcription_sdk.models.transcription_job_input import TranscriptionJobInput
 
 # Initialize the SDK
 sdk = SaladCloudTranscriptionSdk(api_key="your_api_key")
 
-# Transcribe an audio file
+# Setup the request
+request_object = TranscriptionRequest(
+    options=TranscriptionJobInput(
+        language_code="en",
+        return_as_file=False,
+        sentence_level_timestamps=True,
+        word_level_timestamps=True,
+        diarization=True,
+        srt=True
+    ),
+    metadata={"project": "example_project"}
+)
+
+# Transcribe a video file using the Complete Transcription engine
 result = sdk.transcription_client.transcribe(
-    "path/to/audio.mp3",
-    auto_poll = True)
+    "path/to/video.mp4",
+    organization_name="your_organization_name",
+    request=request_object,
+    engine=TranscriptionEngine.Complete,
+    auto_poll=True
+)
 
 # Print the transcription
 print(result.text)
@@ -59,6 +79,33 @@ If you need to set or update the API key after initializing the SDK, you can use
 sdk.set_api_key("YOUR_API_KEY")
 ```
 
+## Transcription Engines
+The SDK supports two transcription modes: `Complete` and `Lite`. The desired mode can be specified via the `engine` parameter of the `transcribe` method. When omitted it defaults to `Complete`. 
+
+When using the `Lite` engine, the request object has to specify explicit defaults for a few of the properties:
+
+```python
+    request = TranscriptionRequest(
+        options=TranscriptionJobInput(
+            language_code="en",
+            return_as_file=True,
+            translate="to_eng",
+            sentence_level_timestamps=True,
+            word_level_timestamps=True,
+            diarization=True,
+            sentence_diarization=True,
+            srt=True,
+
+            # Adding required parameters with null/empty values
+            summarize=0,
+            custom_vocabulary="",
+            llm_translation=[],
+            srt_translation=[],
+        ),
+        metadata={"test_id": "integration_test", "environment": "testing"},
+    )
+```
+
 ## Sample Usage
 
 ### The *source* parameter
@@ -74,18 +121,35 @@ When a remote file is specified, that URL is passed as-is to the transcription e
 
 ```python
 from salad_cloud_transcription import SaladCloudTranscriptionSdk
+from salad_cloud_transcription_sdk.models.transcription_engine import TranscriptionEngine
+from salad_cloud_transcription_sdk.models.transcription_request import TranscriptionRequest
+from salad_cloud_transcription_sdk.models.transcription_job_input import TranscriptionJobInput
 
 # Initialize the SDK
 sdk = SaladCloudTranscriptionSdk(api_key="your_api_key")
 
-# Start a transcription job and wait for the result
-# When the job is processed, this function returns a InferenceEndpointJob
-result = sdk.transcription_client.transcribe(
-    source = "path/to/audio.mp3",
-    auto_poll = True)
+# Setup the request
+request_object = TranscriptionRequest(
+    options=TranscriptionJobInput(
+        language_code="en",
+        return_as_file=False,
+        sentence_level_timestamps=True,
+        word_level_timestamps=True,
+        diarization=True,
+        srt=True
+    ),
+    metadata={"project": "example_project"}
+)
 
-# The output property of the InferenceEndpointJob is a either a TranscriptionJobFileOutput 
-# or a TranscriptionJobOutput. You can print it to examine job results.
+# Start a transcription job and wait for the result
+result = sdk.transcription_client.transcribe(
+    source="path/to/audio.mp3",
+    organization_name="your_organization_name",
+    request=request_object,
+    auto_poll=True
+)
+
+# Print the transcription job output
 print(result.output)
 ```
 
@@ -97,13 +161,28 @@ from salad_cloud_transcription import SaladCloudTranscriptionSdk
 # Initialize the SDK
 sdk = SaladCloudTranscriptionSdk(api_key="your_api_key")
 
+# Setup the request
+request_object = TranscriptionRequest(
+    options=TranscriptionJobInput(
+        language_code="en",
+        return_as_file=False,
+        sentence_level_timestamps=True,
+        word_level_timestamps=True,
+        diarization=True,
+        srt=True
+    ),
+    metadata={"project": "example_project"}
+)
+
 # Start a transcription job. auto_poll = False
-job = sdk.transcription_client.start_transcription_job(
-    source = "path/to/audio.mp3")
+job = sdk.transcription_client.transcribe(
+    source = "path/to/audio.mp3",
+    request = request_object,
+    auto_poll = False)
 
 # Poll for the job status
 while True:
-    job = self._get_transcription_job_internal(organization_name, job.id_)
+    job = self.get_transcription_job(organization_name, job.id_)
     if job.status in [
         Status.SUCCEEDED.value,
         Status.FAILED.value,
@@ -118,17 +197,31 @@ if job.status == Status.SUCCEEDED.value:
 
 ### Start a Transcription Job and Get Updates via a Webhook
 
-First, initialize a transcription job.
-
 ```python
 from salad_cloud_transcription import SaladCloudTranscriptionSdk
+from salad_cloud_transcription_sdk.models.transcription_request import TranscriptionRequest
+from salad_cloud_transcription_sdk.models.transcription_job_input import TranscriptionJobInput
 
 # Initialize the SDK
 sdk = SaladCloudTranscriptionSdk(api_key="your_api_key")
 
+# Setup the request
+request_object = TranscriptionRequest(
+    options=TranscriptionJobInput(
+        language_code="en",
+        return_as_file=False,
+        sentence_level_timestamps=True,
+        word_level_timestamps=True,
+        diarization=True,
+        srt=True
+    ),
+    metadata={"project": "example_project"}
+)
+
 # Start a transcription job with a webhook URL
-job = sdk.transcription_client.start_transcription_job(
-    source = "path/to/audio.mp3",
+job = sdk.transcription_client.transcribe(
+    source="path/to/audio.mp3",
+    request=request_object,
     webhook_url="https://your-webhook-endpoint.com"
 )
 

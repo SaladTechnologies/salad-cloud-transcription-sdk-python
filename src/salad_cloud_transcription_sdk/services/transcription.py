@@ -63,22 +63,6 @@ class TranscriptionService(BaseService):
         self._storage_service = SimpleStorageService(api_key=api_key)
         self._salad_sdk = SaladCloudSdk(api_key=api_key, base_url=_base_url)
 
-    def _get_endpoint_name(
-        self, engine: TranscriptionEngine = TranscriptionEngine.Complete
-    ) -> str:
-        """Get the appropriate endpoint name based on the transcription engine
-
-        :param engine: The transcription engine to use
-        :type engine: TranscriptionEngine
-        :return: The endpoint name
-        :rtype: str
-        """
-        return (
-            LITE_TRANSCRIPTION_ENDPOINT_NAME
-            if engine == TranscriptionEngine.Lite
-            else COMPLETE_TRANSCRIPTION_ENDPOINT_NAME
-        )
-
     def transcribe(
         self,
         source: str,
@@ -201,6 +185,22 @@ class TranscriptionService(BaseService):
             )
 
             return upload_response.url
+
+    def _get_endpoint_name(
+        self, engine: TranscriptionEngine = TranscriptionEngine.Complete
+    ) -> str:
+        """Get the appropriate endpoint name based on the transcription engine
+
+        :param engine: The transcription engine to use
+        :type engine: TranscriptionEngine
+        :return: The endpoint name
+        :rtype: str
+        """
+        return (
+            LITE_TRANSCRIPTION_ENDPOINT_NAME
+            if engine == TranscriptionEngine.Lite
+            else COMPLETE_TRANSCRIPTION_ENDPOINT_NAME
+        )
 
     def get_transcription_job(
         self,
