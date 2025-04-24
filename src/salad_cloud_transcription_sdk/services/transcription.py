@@ -347,15 +347,21 @@ class TranscriptionService(BaseService):
         :return: The job with converted output
         :rtype: InferenceEndpointJob
         """
-        if hasattr(job, "output") and job.output is not None:
+        if not hasattr(job, "output") or job.output is None:
+            return job
+
+        if isinstance(job.output, TranscriptionJobOutput) or isinstance(
+            job.output, TranscriptionJobFileOutput
+        ):
+            return job
+
+        try:
+            job.output = TranscriptionJobOutput.from_json(job.output)
+        except (ValueError, KeyError, TypeError) as e:
             try:
-                job.output = TranscriptionJobOutput.from_json(job.output)
+                job.output = TranscriptionJobFileOutput.from_json(job.output)
             except (ValueError, KeyError, TypeError) as e:
-                print(f"Error converting to TranscriptionJobOutput: {e}")
-                try:
-                    job.output = TranscriptionJobFileOutput.from_json(job.output)
-                except (ValueError, KeyError, TypeError) as e:
-                    print(f"Error converting to TranscriptionJobFileOutput: {e}")
-                    # If conversion fails, leave the output as is
-                    pass
+                # If conversion fails, leave the output as is
+                pass
+
         return job
