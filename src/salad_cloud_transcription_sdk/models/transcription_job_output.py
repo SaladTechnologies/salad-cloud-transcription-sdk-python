@@ -112,18 +112,20 @@ class TranscriptionJobOutput(BaseModel):
     :type sentence_level_timestamps: List[SentenceTimestamp]
     :param srt_content: SRT formatted content for subtitles
     :type srt_content: str
-    :param summary: Summary of the transcription content
-    :type summary: str
-    :param llm_translation: Translations of the transcription in different languages
-    :type llm_translation: Dict[str, str]
-    :param srt_translation: Translations of the SRT content in different languages
-    :type srt_translation: Dict[str, str]
     :param duration_in_seconds: Duration of the audio in seconds
     :type duration_in_seconds: float
-    :param duration: Duration in hours (optional)
-    :type duration: float
     :param processing_time: Processing time in seconds
     :type processing_time: float
+    :param summary: Summary of the transcription content (optional)
+    :type summary: Optional[str]
+    :param llm_translation: Translations of the transcription in different languages (optional)
+    :type llm_translation: Optional[Dict[str, str]]
+    :param srt_translation: Translations of the SRT content in different languages (optional)
+    :type srt_translation: Optional[Dict[str, str]]
+    :param duration: Duration in hours (optional)
+    :type duration: Optional[float]
+    :param overall_processing_time: Overall processing time in seconds (optional)
+    :type overall_processing_time: Optional[float]
     """
 
     def __init__(
@@ -132,12 +134,13 @@ class TranscriptionJobOutput(BaseModel):
         word_segments: List[Dict[str, Any]],
         sentence_level_timestamps: List[Dict[str, Any]],
         srt_content: str,
-        summary: str,
-        llm_translation: Dict[str, str],
-        srt_translation: Dict[str, str],
         duration_in_seconds: float,
-        duration: float,
         processing_time: float,
+        summary: Optional[str] = None,  # optional in Lite
+        llm_translation: Optional[Dict[str, str]] = None,  # optional in Lite
+        srt_translation: Optional[Dict[str, str]] = None,  # optional in Lite
+        duration: Optional[float] = None,  # optional in Lite
+        overall_processing_time: Optional[float] = None,  # optional in Lite
         **kwargs,
     ):
         self.text = self._define_str("text", text)
@@ -146,14 +149,19 @@ class TranscriptionJobOutput(BaseModel):
             SentenceTimestamp(**sentence) for sentence in sentence_level_timestamps
         ]
         self.srt_content = self._define_str("srt_content", srt_content)
-        self.summary = self._define_str("summary", summary)
+        self.summary = summary
         self.llm_translation = llm_translation
         self.srt_translation = srt_translation
         self.duration_in_seconds = self._define_number(
             "duration_in_seconds", duration_in_seconds
         )
-        self.duration = self._define_number("duration", duration)
+        self.duration = self._define_number("duration", duration) if duration else None
         self.processing_time = self._define_number("processing_time", processing_time)
+        self.overall_processing_time = (
+            self._define_number("overall_processing_time", overall_processing_time)
+            if overall_processing_time
+            else None
+        )
         self._kwargs = kwargs
 
     def to_dict(self) -> Dict[str, Any]:
@@ -162,20 +170,30 @@ class TranscriptionJobOutput(BaseModel):
         :return: Dictionary representation of this instance
         :rtype: Dict[str, Any]
         """
-        return {
+        result = {
             "text": self.text,
             "word_segments": [segment.to_dict() for segment in self.word_segments],
             "sentence_level_timestamps": [
                 sentence.to_dict() for sentence in self.sentence_level_timestamps
             ],
             "srt_content": self.srt_content,
-            "summary": self.summary,
-            "llm_translation": self.llm_translation,
-            "srt_translation": self.srt_translation,
             "duration_in_seconds": self.duration_in_seconds,
-            "duration": self.duration,
             "processing_time": self.processing_time,
         }
+
+        # Add optional fields if they exist
+        if self.summary is not None:
+            result["summary"] = self.summary
+        if self.llm_translation is not None:
+            result["llm_translation"] = self.llm_translation
+        if self.srt_translation is not None:
+            result["srt_translation"] = self.srt_translation
+        if self.duration is not None:
+            result["duration"] = self.duration
+        if self.overall_processing_time is not None:
+            result["overall_processing_time"] = self.overall_processing_time
+
+        return result
 
     @classmethod
     def from_json(
