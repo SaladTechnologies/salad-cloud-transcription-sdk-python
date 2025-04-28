@@ -46,12 +46,12 @@ request_object = TranscriptionRequest(
     metadata={"project": "example_project"}
 )
 
-# Transcribe a video file using the Complete Transcription engine
+# Transcribe a video file using the Full Transcription engine
 result = sdk.transcription_client.transcribe(
     "path/to/video.mp4",
     organization_name="your_organization_name",
     request=request_object,
-    engine=TranscriptionEngine.Complete,
+    engine=TranscriptionEngine.Full,
     auto_poll=True
 )
 
@@ -80,7 +80,7 @@ sdk.set_api_key("YOUR_API_KEY")
 ```
 
 ## Transcription Engines
-The SDK supports two transcription modes: `Complete` and `Lite`. The desired mode can be specified via the `engine` parameter of the `transcribe` method. When omitted it defaults to `Complete`. 
+The SDK supports two transcription modes: `Full` and `Lite`. The desired mode can be specified via the `engine` parameter of the `transcribe` method. When omitted it defaults to `Full`. 
 
 When using the `Lite` engine, the request object has to specify explicit defaults for a few of the properties:
 

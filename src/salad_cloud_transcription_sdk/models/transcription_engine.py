@@ -6,9 +6,9 @@ class TranscriptionEngine(Enum):
     Enum representing the different transcription engine options.
 
     Options:
-        - Complete: Complete transcription engine which siupports all features
+        - Full: Full transcription engine which supports all features
         - Lite: Lightweight transcription engine with less features, aimed at being faster
     """
 
-    Complete = "complete"
+    Full = "full"
     Lite = "lite"

@@ -24,7 +24,7 @@ from ..models.transcription_job_file_output import TranscriptionJobFileOutput
 from .simple_storage import SimpleStorageService
 from ..net.environment.environment import (
     Environment,
-    COMPLETE_TRANSCRIPTION_ENDPOINT_NAME,
+    FULL_TRANSCRIPTION_ENDPOINT_NAME,
     LITE_TRANSCRIPTION_ENDPOINT_NAME,
 )
 from ..models.transcription_engine import TranscriptionEngine
@@ -68,7 +68,7 @@ class TranscriptionService(BaseService):
         source: str,
         organization_name: str,
         request: TranscriptionRequest,
-        engine: TranscriptionEngine = TranscriptionEngine.Complete,
+        engine: TranscriptionEngine = TranscriptionEngine.Full,
         auto_poll: bool = False,
         max_polling_duration: int = MAX_POLLING_DURATION,
     ) -> InferenceEndpointJob:
@@ -80,8 +80,8 @@ class TranscriptionService(BaseService):
         :type organization_name: str
         :param request: The transcription request options
         :type request: TranscriptionRequest
-        :param engine: The transcription engine to use (Complete or Lite)
-        :type engine: TranscriptionEngine, optional (default=TranscriptionEngine.Complete)
+        :param engine: The transcription engine to use (Full or Lite)
+        :type engine: TranscriptionEngine, optional (default=TranscriptionEngine.Full)
         :param auto_poll: Whether to block until the transcription is complete, or return immediately
         :type auto_poll: bool, optional (default=False)
         :param max_polling_duration: Maximum duration in seconds to poll for job completion
@@ -187,7 +187,7 @@ class TranscriptionService(BaseService):
             return upload_response.url
 
     def _get_endpoint_name(
-        self, engine: TranscriptionEngine = TranscriptionEngine.Complete
+        self, engine: TranscriptionEngine = TranscriptionEngine.Full
     ) -> str:
         """Get the appropriate endpoint name based on the transcription engine
 
@@ -199,14 +199,14 @@ class TranscriptionService(BaseService):
         return (
             LITE_TRANSCRIPTION_ENDPOINT_NAME
             if engine == TranscriptionEngine.Lite
-            else COMPLETE_TRANSCRIPTION_ENDPOINT_NAME
+            else FULL_TRANSCRIPTION_ENDPOINT_NAME
         )
 
     def get_transcription_job(
         self,
         organization_name: str,
         job_id: str,
-        engine: TranscriptionEngine = TranscriptionEngine.Complete,
+        engine: TranscriptionEngine = TranscriptionEngine.Full,
     ) -> InferenceEndpointJob:
         """Get a transcription job by providing the inference job ID
 
@@ -215,7 +215,7 @@ class TranscriptionService(BaseService):
         :param job_id: The transcription job ID
         :type job_id: str
         :param engine: The transcription engine to use
-        :type engine: TranscriptionEngine, optional (default=TranscriptionEngine.Complete)
+        :type engine: TranscriptionEngine, optional (default=TranscriptionEngine.Full)
 
         :return: The transcription job details
         :rtype: InferenceEndpointJob
@@ -226,7 +226,7 @@ class TranscriptionService(BaseService):
         self,
         organization_name: str,
         job_id: str,
-        engine: TranscriptionEngine = TranscriptionEngine.Complete,
+        engine: TranscriptionEngine = TranscriptionEngine.Full,
     ) -> InferenceEndpointJob:
         inference_endpoint_name = self._get_endpoint_name(engine)
         job = self._salad_sdk.inference_endpoints.get_inference_endpoint_job(
@@ -242,7 +242,7 @@ class TranscriptionService(BaseService):
     def list_transcription_jobs(
         self,
         organization_name: str,
-        engine: TranscriptionEngine = TranscriptionEngine.Complete,
+        engine: TranscriptionEngine = TranscriptionEngine.Full,
         page: Optional[int] = None,
         page_size: Optional[int] = None,
     ):
@@ -251,7 +251,7 @@ class TranscriptionService(BaseService):
         :param organization_name: The organization name
         :type organization_name: str
         :param engine: The transcription engine to use
-        :type engine: TranscriptionEngine, optional (default=TranscriptionEngine.Complete)
+        :type engine: TranscriptionEngine, optional (default=TranscriptionEngine.Full)
         :param page: The page number, defaults to None
         :type page: Optional[int], optional
         :param page_size: The maximum number of items per page, defaults to None
@@ -272,7 +272,7 @@ class TranscriptionService(BaseService):
         self,
         organization_name: str,
         job_id: str,
-        engine: TranscriptionEngine = TranscriptionEngine.Complete,
+        engine: TranscriptionEngine = TranscriptionEngine.Full,
     ) -> None:
         """Cancels a transcription job
 
@@ -281,7 +281,7 @@ class TranscriptionService(BaseService):
         :param job_id: The transcription job ID
         :type job_id: str
         :param engine: The transcription engine to use
-        :type engine: TranscriptionEngine, optional (default=TranscriptionEngine.Complete)
+        :type engine: TranscriptionEngine, optional (default=TranscriptionEngine.Full)
 
         :raises RequestError: Raised when a request fails.
         """

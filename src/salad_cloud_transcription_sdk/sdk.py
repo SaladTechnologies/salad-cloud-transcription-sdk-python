@@ -35,7 +35,7 @@ class SaladCloudTranscriptionSdk:
         source: str,
         organization_name: str,
         request: TranscriptionRequest,
-        engine: TranscriptionEngine = TranscriptionEngine.Complete,
+        engine: TranscriptionEngine = TranscriptionEngine.Full,
         auto_poll: bool = False,
     ) -> InferenceEndpointJob:
         """Creates a new transcription job
@@ -46,7 +46,7 @@ class SaladCloudTranscriptionSdk:
         :type organization_name: str
         :param request: The transcription request options
         :type request: TranscriptionRequest
-        :param engine: The transcription engine to use, defaults to TranscriptionEngine.Complete
+        :param engine: The transcription engine to use, defaults to TranscriptionEngine.Full
         :type engine: TranscriptionEngine, optional
         :param auto_poll: Whether to block until the transcription is complete, or return immediately
         :type auto_poll: bool, optional (default=False)
