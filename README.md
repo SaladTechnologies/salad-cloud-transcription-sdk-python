@@ -25,7 +25,7 @@ pip install salad-cloud-transcription
 ## Quick Start
 
 ```python
-from salad_cloud_transcription import SaladCloudTranscriptionSdk
+from salad_cloud_transcription_sdk import SaladCloudTranscriptionSdk
 from salad_cloud_transcription_sdk.models.transcription_engine import TranscriptionEngine
 from salad_cloud_transcription_sdk.models.transcription_request import TranscriptionRequest
 from salad_cloud_transcription_sdk.models.transcription_job_input import TranscriptionJobInput
@@ -47,7 +47,7 @@ request_object = TranscriptionRequest(
 )
 
 # Transcribe a video file using the Full Transcription engine
-result = sdk.transcription_client.transcribe(
+result = sdk.transcribe(
     "path/to/video.mp4",
     organization_name="your_organization_name",
     request=request_object,
@@ -56,7 +56,7 @@ result = sdk.transcription_client.transcribe(
 )
 
 # Print the transcription
-print(result.text)
+print(result.output.text)
 ```
 
 ## Authentication
@@ -80,7 +80,7 @@ sdk.set_api_key("YOUR_API_KEY")
 ```
 
 ## Transcription Engines
-The SDK supports two transcription modes: `Full` and `Lite`. The desired mode can be specified via the `engine` parameter of the `transcribe` method. When omitted it defaults to `Full`. 
+The SDK supports two transcription modes: `Full` and `Lite`. The desired mode can be specified via the `engine` parameter of the `transcribe` method. When omitted it defaults to `Full`.
 
 When using the `Lite` engine, the request object has to specify explicit defaults for a few of the properties:
 
@@ -109,13 +109,13 @@ When using the `Lite` engine, the request object has to specify explicit default
 ## Sample Usage
 
 ### The *source* parameter
-All transcription methods of the `SaladCloudTranscriptionSdk` take a source parameter - the input file for the transcription job. 
+All transcription methods of the `SaladCloudTranscriptionSdk` take a source parameter - the input file for the transcription job.
 
-The `source` can be a path pointing to a local file, like `/usr/share/my_video_project.mp4`. Or, it can be an URL, like `https://myserver.net/files/my_video_project.mp4`. 
+The `source` can be a path pointing to a local file, like `/usr/share/my_video_project.mp4`. Or, it can be an URL, like `https://myserver.net/files/my_video_project.mp4`.
 
 When a local file is specified, the SDK will take care to upload that to the Saldad Simple Storage Service (S4) behind the scenes. When the upload is completed, the transcription job is run using as input an S4 URL.
 
-When a remote file is specified, that URL is passed as-is to the transcription engine. Make sure the file is publicly accessible.  
+When a remote file is specified, that URL is passed as-is to the transcription engine. Make sure the file is publicly accessible.
 
 ### Start a Transcription Job and wait for it to complete
 
@@ -238,11 +238,11 @@ def webhook_handler(request):
     sdk = SaladCloudTranscriptionSdk(api_key="your_api_key")
 
     # Extract the signing parameters from the request headers
-    payload = request.json()  
+    payload = request.json()
     webhook_signature = request.headers.get("webhook-signature")
     webhook_timestamp = request.headers.get("webhook-timestamp")
     webhook_message_id = request.headers.get("webhook-id")
- 
+
     # Retrieve the webhook signing secret for your Salad organization
     sdk = SaladCloudTranscriptionSdk(api_key="your_api_key")
     secret_key_service = sdk.webhook_secret_key
@@ -260,7 +260,7 @@ def webhook_handler(request):
         webhook_signature=webhook_signature,
     )
 
-    # The payload verification result is a TranscriptionWebhookPayload. 
+    # The payload verification result is a TranscriptionWebhookPayload.
     # Its data field is a InferenceEndpointJob and it contains the transcription job output.
     print(job.data)
 ```
