@@ -20,6 +20,10 @@ class TranslationLanguage(Enum):
     def list(cls):
         return list(cls)
 
+    @classmethod
+    def from_value(cls, value: str) -> TranslationLanguage:
+        return cls(value.lower())
+
 
 @JsonMap({})
 class TranscriptionJobInput(BaseModel):
@@ -77,12 +81,28 @@ class TranscriptionJobInput(BaseModel):
         self.sentence_diarization = sentence_diarization
         self.srt = srt
         self.summarize = self._define_number("summarize", summarize, ge=0)
-        self.llm_translation = self._define_list(llm_translation or [], TranslationLanguage)
-        self.srt_translation = self._define_list(srt_translation or [], TranslationLanguage)
+        self.llm_translation = self._normalize_enum_list(llm_translation or [], TranslationLanguage)
+        self.srt_translation = self._normalize_enum_list(srt_translation or [], TranslationLanguage)
         self.custom_vocabulary = self._define_str("custom_vocabulary", custom_vocabulary)
         self.custom_prompt = self._define_str("custom_prompt", custom_prompt)
         self.multichannel = multichannel
         self._kwargs = kwargs
+
+    @staticmethod
+    def _normalize_enum_list(items: List[Union[str, Enum]], enum_class: Enum) -> List[Enum]:
+        result = []
+        for item in items:
+            if isinstance(item, enum_class):
+                result.append(item)
+            elif isinstance(item, str):
+                try:
+                    result.append(enum_class(item.lower()))
+                except ValueError:
+                    raise ValueError(f"Invalid language string '{item}' for {enum_class.__name__}")
+            else:
+                raise TypeError(f"{enum_class.__name__} list must contain only strings or {enum_class.__name__} enums")
+        return result
+
 
     def to_dict(self) -> Dict[str, Any]:
         """Converts the TranscriptionJobInput object to a dictionary
