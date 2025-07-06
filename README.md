@@ -182,7 +182,7 @@ job = sdk.transcription_client.transcribe(
 
 # Poll for the job status
 while True:
-    job = self.get_transcription_job(organization_name, job.id_)
+    job = sdk.get_transcription_job(organization_name, job.id_)
     if job.status in [
         Status.SUCCEEDED.value,
         Status.FAILED.value,
@@ -215,14 +215,14 @@ request_object = TranscriptionRequest(
         diarization=True,
         srt=True
     ),
-    metadata={"project": "example_project"}
+    metadata={"project": "example_project"},
+    webhook_url="https://your-webhook-endpoint.com"
 )
 
 # Start a transcription job with a webhook URL
-job = sdk.transcription_client.transcribe(
+job = sdk.transcribe(
     source="path/to/audio.mp3",
-    request=request_object,
-    webhook_url="https://your-webhook-endpoint.com"
+    request=request_object
 )
 
 print(f"Job started with ID: {job.id}")
