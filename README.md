@@ -120,7 +120,7 @@ When a remote file is specified, that URL is passed as-is to the transcription e
 ### Start a Transcription Job and wait for it to complete
 
 ```python
-from salad_cloud_transcription import SaladCloudTranscriptionSdk
+from salad_cloud_transcription_sdk import SaladCloudTranscriptionSdk
 from salad_cloud_transcription_sdk.models.transcription_engine import TranscriptionEngine
 from salad_cloud_transcription_sdk.models.transcription_request import TranscriptionRequest
 from salad_cloud_transcription_sdk.models.transcription_job_input import TranscriptionJobInput
@@ -142,7 +142,7 @@ request_object = TranscriptionRequest(
 )
 
 # Start a transcription job and wait for the result
-result = sdk.transcription_client.transcribe(
+result = sdk.transcribe(
     source="path/to/audio.mp3",
     organization_name="your_organization_name",
     request=request_object,
@@ -157,6 +157,8 @@ print(result.output)
 
 ```python
 from salad_cloud_transcription import SaladCloudTranscriptionSdk
+from salad_cloud_sdk.models import Status
+
 
 # Initialize the SDK
 sdk = SaladCloudTranscriptionSdk(api_key="your_api_key")
@@ -175,7 +177,7 @@ request_object = TranscriptionRequest(
 )
 
 # Start a transcription job. auto_poll = False
-job = sdk.transcription_client.transcribe(
+job = sdk.transcribe(
     source = "path/to/audio.mp3",
     request = request_object,
     auto_poll = False)
@@ -198,7 +200,7 @@ if job.status == Status.SUCCEEDED.value:
 ### Start a Transcription Job and Get Updates via a Webhook
 
 ```python
-from salad_cloud_transcription import SaladCloudTranscriptionSdk
+from salad_cloud_transcription_sdk import SaladCloudTranscriptionSdk
 from salad_cloud_transcription_sdk.models.transcription_request import TranscriptionRequest
 from salad_cloud_transcription_sdk.models.transcription_job_input import TranscriptionJobInput
 
@@ -231,7 +233,7 @@ print(f"Job started with ID: {job.id}")
 In your webhook handler you need to validate the payload being sent to you:
 
 ```python
-from salad_cloud_transcription import SaladCloudTranscriptionSdk
+from salad_cloud_transcription_sdk import SaladCloudTranscriptionSdk
 
 def webhook_handler(request):
     # Initialize the SDK
