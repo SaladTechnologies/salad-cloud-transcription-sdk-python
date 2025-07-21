@@ -15,16 +15,20 @@ class TranslationLanguage(Enum):
     PORTUGUESE = "portuguese"
     HINDI = "hindi"
     THAI = "thai"
-    
+
     @classmethod
     def list(cls):
         return list(cls)
+
+    @classmethod
+    def from_value(cls, value: str) -> TranslationLanguage:
+        return cls(value.lower())
 
 
 @JsonMap({})
 class TranscriptionJobInput(BaseModel):
     """Configuration for a transcription job
-    
+
     :param return_as_file: Set to "true" to receive the transcription output as a downloadable file URL, especially useful for large responses. Set to "false" (default) to receive the full transcription in the API response. If the response exceeds 1 MB in size, it will automatically be returned as a link to a file, regardless of the return_as_file setting.
     :type return_as_file: bool
     :param language_code: Transcription is available in 97 languages. We automatically identify the source language. In order to make diarization more accurate, please provide your transcription language.
@@ -50,21 +54,22 @@ class TranscriptionJobInput(BaseModel):
     :param custom_vocabulary: Provide a comma-separated list of terms or phrases that are specific to your transcription context. This helps improve transcription accuracy for domain-specific terminology. (in preview)
     :type custom_vocabulary: str
     """
-
     def __init__(
         self,
         return_as_file: bool,
         language_code: str,
-        translate: str,
-        sentence_level_timestamps: bool,
-        word_level_timestamps: bool,
-        diarization: bool,
-        sentence_diarization: bool,
-        srt: bool,
-        summarize: int,
-        llm_translation: List[TranslationLanguage],
-        srt_translation: List[TranslationLanguage],
-        custom_vocabulary: str,
+        translate: str = "",
+        sentence_level_timestamps: bool = False,
+        word_level_timestamps: bool = False,
+        diarization: bool = False,
+        sentence_diarization: bool = False,
+        srt: bool = False,
+        summarize: int = 0,
+        llm_translation: List[TranslationLanguage] = None,
+        srt_translation: List[TranslationLanguage] = None,
+        custom_vocabulary: str = "",
+        custom_prompt: str = "",
+        multichannel: bool = False,
         **kwargs,
     ):
         self.return_as_file = return_as_file
@@ -76,14 +81,32 @@ class TranscriptionJobInput(BaseModel):
         self.sentence_diarization = sentence_diarization
         self.srt = srt
         self.summarize = self._define_number("summarize", summarize, ge=0)
-        self.llm_translation = self._define_list(llm_translation, TranslationLanguage)
-        self.srt_translation = self._define_list(srt_translation, TranslationLanguage)
+        self.llm_translation = self._normalize_enum_list(llm_translation or [], TranslationLanguage)
+        self.srt_translation = self._normalize_enum_list(srt_translation or [], TranslationLanguage)
         self.custom_vocabulary = self._define_str("custom_vocabulary", custom_vocabulary)
+        self.custom_prompt = self._define_str("custom_prompt", custom_prompt)
+        self.multichannel = multichannel
         self._kwargs = kwargs
+
+    @staticmethod
+    def _normalize_enum_list(items: List[Union[str, Enum]], enum_class: Enum) -> List[Enum]:
+        result = []
+        for item in items:
+            if isinstance(item, enum_class):
+                result.append(item)
+            elif isinstance(item, str):
+                try:
+                    result.append(enum_class(item.lower()))
+                except ValueError:
+                    raise ValueError(f"Invalid language string '{item}' for {enum_class.__name__}")
+            else:
+                raise TypeError(f"{enum_class.__name__} list must contain only strings or {enum_class.__name__} enums")
+        return result
+
 
     def to_dict(self) -> Dict[str, Any]:
         """Converts the TranscriptionJobInput object to a dictionary
-        
+
         :return: Dictionary representation of this instance
         :rtype: Dict[str, Any]
         """
@@ -99,11 +122,11 @@ class TranscriptionJobInput(BaseModel):
             "summarize": self.summarize,
             "custom_vocabulary": self.custom_vocabulary,
         }
-        
+
         if self.llm_translation:
             result['llm_translation'] = ", ".join(lang.value for lang in self.llm_translation)
         if self.srt_translation:
             result['srt_translation'] = ", ".join(lang.value for lang in self.srt_translation)
-        
+
         return result
 
