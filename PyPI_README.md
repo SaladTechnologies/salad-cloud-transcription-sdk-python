@@ -4,8 +4,8 @@ Welcome to the SaladCloud Transcription SDK documentation. This guide will help 
 
 ## Versions<a id="versions"></a>
 
-- API version: `1.0.0a1`
-- SDK version: `1.0.0a1`
+- API version: `1.0.0-alpha.1`
+- SDK version: `1.0.0-alpha.1`
 
 ## About the API<a id="about-the-api"></a>
 
