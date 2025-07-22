@@ -19,7 +19,7 @@ A Python SDK for interacting with the Salad Cloud Transcription service, which p
 Install the package using pip:
 
 ```bash
-pip install salad-cloud-transcription
+pip install salad-cloud-transcription-sdk
 ```
 
 ## Quick Start
